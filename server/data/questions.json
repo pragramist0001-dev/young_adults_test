@@ -1,0 +1,241 @@
+[
+  {
+    "_id": "1769867210890",
+    "questionText": "a",
+    "options": [
+      "a",
+      "a",
+      "a",
+      "a"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T13:46:50.890Z"
+  },
+  {
+    "_id": "1769867300831",
+    "questionText": "b",
+    "options": [
+      "b",
+      "b",
+      "b",
+      "b"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T13:48:20.831Z"
+  },
+  {
+    "_id": "1769871158670",
+    "questionText": "aa",
+    "options": [
+      "aaa",
+      "aaa",
+      "aaa",
+      "aaa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T14:52:38.670Z"
+  },
+  {
+    "_id": "1769871158678",
+    "questionText": "aaaaa",
+    "options": [
+      "aa",
+      "aa",
+      "a",
+      "aa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T14:52:38.678Z"
+  },
+  {
+    "_id": "1769871183157",
+    "questionText": "aa",
+    "options": [
+      "aa",
+      "aa",
+      "aaa",
+      "aaaa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T14:53:03.157Z"
+  },
+  {
+    "_id": "1769871255620",
+    "questionText": "aaa",
+    "options": [
+      "aaa",
+      "aaa",
+      "aaa",
+      "aaa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T14:54:15.620Z"
+  },
+  {
+    "_id": "1769872243903",
+    "questionText": "sasa",
+    "options": [
+      "a",
+      "aa",
+      "aaa",
+      "a"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "createdAt": "2026-01-31T15:10:43.903Z"
+  },
+  {
+    "_id": "1769935609164",
+    "questionText": "teg nimani anglatadi",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T08:46:49.164Z"
+  },
+  {
+    "_id": "1769935609169",
+    "questionText": "\"a\" tegi nimani anglatadi ?",
+    "options": [
+      "A",
+      "B",
+      "D",
+      "C"
+    ],
+    "correctOption": 1,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T08:46:49.169Z"
+  },
+  {
+    "_id": "1769936370058",
+    "questionText": "vdvdv",
+    "options": [
+      "a",
+      "sa",
+      "s",
+      "f"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T08:59:30.058Z"
+  },
+  {
+    "_id": "1769936897765",
+    "questionText": "aaaa",
+    "options": [
+      "a",
+      "s",
+      "r",
+      "q"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T09:08:17.765Z"
+  },
+  {
+    "_id": "1769946398489",
+    "questionText": "\"a\" tegi nimani anglatadi ?",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T11:46:38.489Z"
+  },
+  {
+    "_id": "1769946398504",
+    "questionText": "\"b\" tegi nimani anglatadi ?",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "correctOption": 1,
+    "subject": "Front-end",
+    "createdAt": "2026-02-01T11:46:38.504Z"
+  },
+  {
+    "_id": "1769951831592",
+    "questionText": "savol 1 ",
+    "options": [
+      "a",
+      "b",
+      "d",
+      "c"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1769949788384",
+    "createdAt": "2026-02-01T13:17:11.592Z"
+  },
+  {
+    "_id": "1769951831610",
+    "questionText": "savol 2",
+    "options": [
+      "e",
+      "a",
+      "s",
+      "d"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1769949788384",
+    "createdAt": "2026-02-01T13:17:11.610Z"
+  },
+  {
+    "_id": "1769951831615",
+    "questionText": "savol 3",
+    "options": [
+      "as",
+      "sa",
+      "dsd",
+      "aasd"
+    ],
+    "correctOption": 1,
+    "subject": "Front-end",
+    "teacherId": "1769949788384",
+    "createdAt": "2026-02-01T13:17:11.615Z"
+  },
+  {
+    "_id": "1769953969839",
+    "questionText": "Savol 1",
+    "options": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1769953841309",
+    "createdAt": "2026-02-01T13:52:49.840Z"
+  },
+  {
+    "_id": "1769953969856",
+    "questionText": "savol 2",
+    "options": [
+      "sa",
+      "ss",
+      "sss",
+      "sss"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1769953841309",
+    "createdAt": "2026-02-01T13:52:49.856Z"
+  }
+]

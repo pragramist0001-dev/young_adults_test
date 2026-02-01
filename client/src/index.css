@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer base {
+    :root {
+        --bg-main: #F8FAFC;
+        --bg-card: #FFFFFF;
+        --bg-sidebar: #1E293B;
+        --text-main: #1E293B;
+        --text-muted: #64748B;
+        --border-main: #F1F5F9;
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(241, 245, 249, 0.5);
+    }
+
+    [data-theme='dark'] {
+        --bg-main: #0F172A;
+        --bg-card: #1E293B;
+        --bg-sidebar: #020617;
+        --text-main: #F1F5F9;
+        --text-muted: #94A3B8;
+        --border-main: #334155;
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(51, 65, 85, 0.5);
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    button,
+    select,
+    a,
+    input[type="submit"],
+    [role="button"] {
+        cursor: pointer;
+    }
+}
+
+@keyframes float-around {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 0.15;
+    }
+
+    25% {
+        transform: translate(40px, 20px) rotate(8deg);
+        opacity: 0.25;
+    }
+
+    50% {
+        transform: translate(-20px, 40px) rotate(-8deg);
+        opacity: 0.2;
+    }
+
+    75% {
+        transform: translate(-40px, -20px) rotate(4deg);
+        opacity: 0.15;
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 0.15;
+    }
+}
+
+@keyframes float-logo {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-float-logo {
+    animation: float-logo 3s ease-in-out infinite;
+}
+
+.animate-float-around {
+    animation: float-around 12s ease-in-out infinite;
+    will-change: transform, opacity;
+}
