@@ -873,11 +873,11 @@ const AdminDashboard = () => {
                                     <button onClick={async () => {
                                         const config = { headers: { Authorization: `Bearer ${token}` } };
                                         try {
-                                            const res = await axios.get(`http://localhost:5000/api/tests/${test._id}`, config);
+                                            const res = await axios.get(`${API_URL}/tests/${test._id}`, config);
                                             setViewingTest(res.data);
                                         } catch (err) { toast.error('Yuklashda xatolik'); }
                                     }} className="p-3 bg-blue-500 text-white rounded-2xl hover:scale-110 transition-all"><Eye size={18} /></button>
-                                    <button onClick={async () => { if (window.confirm('O\'chirilsinmi?')) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`http://localhost:5000/api/tests/${test._id}`, config); toast.success('O\'chirildi'); fetchData(); } catch (err) { toast.error('Xatoplik'); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
+                                    <button onClick={async () => { if (window.confirm('O\'chirilsinmi?')) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`${API_URL}/tests/${test._id}`, config); toast.success('O\'chirildi'); fetchData(); } catch (err) { toast.error('Xatoplik'); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
                                 </div>
                                 <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center mb-6"><BookOpen size={30} /></div>
                                 <h4 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tight mb-2">{test.topic}</h4>

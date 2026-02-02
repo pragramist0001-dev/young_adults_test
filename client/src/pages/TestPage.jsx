@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { answerQuestion, nextQuestion, prevQuestion, finishTest, setScore } from '../features/test/testSlice';
 import { translations } from '../utils/translations';
+import { API_URL } from '../utils/apiConfig';
 
 const TestPage = () => {
     const { questions, currentQuestionIndex, answers, studentId, testId, startTime, isFinished, score } = useSelector((state) => state.test);
@@ -42,7 +43,7 @@ const TestPage = () => {
         setSubmitting(true);
         try {
             const timeSpent = formatTimeSpent(startTime);
-            const res = await axios.post('http://localhost:5000/api/students/submit', {
+            const res = await axios.post(`${API_URL}/students/submit`, {
                 studentId,
                 testId,
                 answers,
