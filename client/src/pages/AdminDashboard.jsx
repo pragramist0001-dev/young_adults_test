@@ -37,6 +37,8 @@ const AdminDashboard = () => {
 
     // Forms
     const [teacherData, setTeacherData] = useState({ name: '', email: '', password: '', subject: '' });
+    const [editTeacherData, setEditTeacherData] = useState({ id: '', name: '', email: '', subject: '' }); // New Edit State
+    const [showEditTeacherModal, setShowEditTeacherModal] = useState(false); // New Edit Modal State
     const [showPassword, setShowPassword] = useState(false);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [showAddSubject, setShowAddSubject] = useState(false);
@@ -57,10 +59,10 @@ const AdminDashboard = () => {
 
     // PORTED TEACHER STATE
     const [qData, setQData] = useState({ questionText: '', options: ['', '', '', ''], correctOption: 0 });
-    const [myQuestions, setMyQuestions] = useState([]);
+    const [activeTests, setActiveTests] = useState([]); // This will now hold ALL tests for admin
+    const [testFilter, setTestFilter] = useState(''); // New filter state
     const [topicName, setTopicName] = useState('');
     const [builderQuestions, setBuilderQuestions] = useState([]);
-    const [activeTests, setActiveTests] = useState([]);
     const [groups, setGroups] = useState([]);
     const [groupSubjectFilter, setGroupSubjectFilter] = useState('');
     const [studentGroupFilter, setStudentGroupFilter] = useState('');
@@ -85,14 +87,37 @@ const AdminDashboard = () => {
         const config = { headers: { Authorization: `Bearer ${token} ` } };
         setIsRefreshing(true);
         try {
-            await Promise.all([
-                axios.get(`${API_URL}/students`, config).then(res => setStudents(res.data)),
-                axios.get(`${API_URL}/auth/teachers`, config).then(res => setTeachers(res.data)),
-                axios.get(`${API_URL}/subjects`, config).then(res => setSubjects(res.data.map(s => s.name))),
-                axios.get(`${API_URL}/tests/count`, config).then(res => setTestsCount(res.data)),
-                axios.get(`${API_URL}/groups`, config).then(res => setGroups(res.data)),
-                axios.get(`${API_URL}/tasks`, config).then(res => setTasks(res.data))
+            const [sRes, tRes, subRes, cRes, gRes, taskRes, aRes] = await Promise.all([
+                axios.get(`${API_URL}/students`, config),
+                axios.get(`${API_URL}/auth/teachers`, config),
+                axios.get(`${API_URL}/subjects`, config),
+                axios.get(`${API_URL}/tests/count`, config),
+                axios.get(`${API_URL}/groups`, config),
+                axios.get(`${API_URL}/tasks`, config),
+                axios.get(`${API_URL}/tests`, config)
             ]);
+
+            const validTeacherIds = new Set(tRes.data.map(t => t._id));
+
+            setTeachers(tRes.data);
+            setStudents(sRes.data.filter(s => {
+                const tid = s.teacherId?._id || s.teacherId;
+                return tid && validTeacherIds.has(tid);
+            }));
+            setSubjects(subRes.data);
+            setTestsCount(cRes.data);
+            setGroups(gRes.data.filter(g => {
+                const tid = g.teacherId?._id || g.teacherId;
+                return tid && validTeacherIds.has(tid);
+            }));
+            setTasks(taskRes.data.filter(t => {
+                const tid = t.teacher?._id || t.teacher;
+                return tid && validTeacherIds.has(tid);
+            }));
+            setActiveTests(aRes.data.filter(t => {
+                const tid = t.teacherId?._id || t.teacherId;
+                return tid && validTeacherIds.has(tid);
+            }));
             if (force) toast.success('Ma\'lumotlar yangilandi!');
             setShowToast(true);
         } catch (err) {
@@ -202,10 +227,10 @@ const AdminDashboard = () => {
         };
 
         const normalize = (str) => str?.toString().toLowerCase().trim() || '';
-        const fStudents = Array.isArray(students) ? students.filter(s => filterDate(s.createdAt)) : [];
+        const fStudents = Array.isArray(students) ? students.filter(s => filterDate(s.createdAt) && s.teacherId) : [];
         const fTeachers = Array.isArray(teachers) ? teachers.filter(t => filterDate(t.createdAt || now)) : [];
-        const fGroups = Array.isArray(groups) ? groups.filter(g => filterDate(g.createdAt)) : [];
-        const fTasks = Array.isArray(tasks) ? tasks.filter(t => filterDate(t.createdAt)) : [];
+        const fGroups = Array.isArray(groups) ? groups.filter(g => filterDate(g.createdAt) && g.teacherId) : [];
+        const fTasks = Array.isArray(tasks) ? tasks.filter(t => filterDate(t.createdAt) && t.teacher) : [];
 
         const passThreshold = 60;
         const passedCount = fStudents.filter(s => (s.score || 0) >= passThreshold).length;
@@ -236,7 +261,7 @@ const AdminDashboard = () => {
         const studentActivities = fStudents.map(s => ({
             type: 'student',
             title: 'Yangi o\'quvchi',
-            desc: `${s.fullName} tizimga qo'shildi`,
+            desc: `${s.fullName} (${s.teacherId?.name || '---'}) tizimga qo'shildi`,
             time: s.createdAt,
             icon: GraduationCap,
             color: 'text-blue-500',
@@ -276,17 +301,47 @@ const AdminDashboard = () => {
         };
     }, [students, teachers, subjects, timeFilter, groups, tasks]);
 
+    const handleTeacherImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setEditTeacherData({ ...editTeacherData, image: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleLogout = () => { dispatch(logout()); toast.success('Xayr, Boss!'); navigate('/login'); };
     const handleAddTeacher = async (e) => {
         e.preventDefault();
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const loadToast = toast.loading('Ustoz qo\'shilmoqda...');
         try {
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            // Ensure subject is selected
+            if (!teacherData.subject) {
+                toast.error('Fan tanlanmagan!');
+                return;
+            }
             await axios.post(`${API_URL}/auth/register`, { ...teacherData, role: 'teacher' }, config);
-            toast.success(`${teacherData.name} qo'shildi!`, { id: loadToast });
-            setTeacherData({ ...teacherData, name: '', email: '', password: '' });
+            toast.success('Ustoz qo\'shildi!');
+            setTeacherData({ name: '', email: '', password: '', subject: '' });
             fetchData();
-        } catch (err) { toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast }); }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Xatolik');
+        }
+    };
+
+    const handleUpdateTeacher = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.put(`${API_URL}/auth/update-teacher/${editTeacherData.id}`, editTeacherData, config);
+            toast.success('Ustoz ma\'lumotlari yangilandi!');
+            setShowEditTeacherModal(false);
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Xatolik');
+        }
     };
     const handleDeleteTeacher = async (id, name) => {
         if (!window.confirm(`${name}ni o'chirmoqchimisiz?`)) return;
@@ -388,6 +443,21 @@ const AdminDashboard = () => {
             fetchData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast });
+        }
+    };
+
+    const handleEditSubject = async (e, oldName) => {
+        e.stopPropagation();
+        const newName = window.prompt("Yangi nomni kiriting:", oldName);
+        if (!newName || newName === oldName) return;
+
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        try {
+            await axios.put(`${API_URL}/subjects/${oldName}`, { name: newName }, config);
+            toast.success('Yangilandi');
+            fetchData();
+        } catch (err) {
+            toast.error('Xatolik');
         }
     };
 
@@ -502,15 +572,9 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
-                <div className="p-6 pt-3 border-t border-slate-700/50 space-y-3 flex-shrink-0 bg-[var(--bg-sidebar)] z-10">
-                    <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-[#38BDF8] text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:bg-slate-800'}`}>
-                        <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-700 flex items-center justify-center">
-                            {profileData.image ? <img src={profileData.image} alt="Profile" className="w-full h-full object-cover" /> : <User size={14} />}
-                        </div>
-                        <span className="font-bold text-xs truncate">{profileData.name || 'Admin'}</span>
-                    </button>
-                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[10px] font-black text-rose-400 border border-rose-400/10 rounded-xl hover:bg-rose-400/10 transition-all uppercase tracking-widest">
-                        <LogOut size={12} /><span>{t.logout}</span>
+                <div className="p-6 pt-3 border-t border-slate-700/50 flex-shrink-0 bg-[var(--bg-sidebar)] z-10 text-center">
+                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-4 text-xs font-black text-rose-400 border border-rose-400/10 rounded-[24px] hover:bg-rose-400/10 transition-all uppercase tracking-[0.3em]">
+                        <LogOut size={16} /><span>{t.logout}</span>
                     </button>
                 </div>
             </aside>
@@ -541,13 +605,32 @@ const AdminDashboard = () => {
 
 
                     <div className="flex items-center gap-4">
-                        <div className="bg-[var(--bg-main)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-main)]">
+                        <div className="bg-[var(--bg-main)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-main)] mr-2">
                             {['week', 'month', 'all'].map(period => (
                                 <button key={period} onClick={() => setTimeFilter(period)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${timeFilter === period ? 'bg-[var(--bg-card)] text-[#38BDF8] shadow-md' : 'text-slate-400'}`}>
                                     {period === 'week' ? 'Hafta' : period === 'month' ? 'Oy' : 'Jami'}
                                 </button>
                             ))}
                         </div>
+
+                        <div className="h-10 w-[1px] bg-[var(--border-main)] mx-2 hidden lg:block"></div>
+
+                        <div
+                            onClick={() => setActiveTab('settings')}
+                            className="flex items-center gap-3 px-3 py-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] cursor-pointer hover:shadow-lg transition-all group"
+                        >
+                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-inner group-hover:scale-105 transition-transform">
+                                {profileData.image ? (
+                                    <img src={profileData.image} alt="Admin" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User size={16} className="text-blue-500" />
+                                )}
+                            </div>
+                            <div className="hidden sm:block text-left">
+                                <p className="text-[10px] font-black text-[var(--text-main)] leading-none uppercase tracking-widest">Admin</p>
+                            </div>
+                        </div>
+
                         <button onClick={() => fetchData(true)} className={`p-4 bg-[var(--bg-card)] text-[#38BDF8] rounded-[20px] shadow-sm border border-[var(--border-main)] hover:shadow-xl hover:-translate-y-1 transition-all ${isRefreshing ? 'animate-spin' : 'active:scale-95'}`}>
                             <RefreshCw size={20} />
                         </button>
@@ -623,16 +706,20 @@ const AdminDashboard = () => {
                                             <thead>
                                                 <tr>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.name}</th>
+                                                    <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">USTOZ</th>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">{t.score_ball.toUpperCase()}</th>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">{t.status.toUpperCase()}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="text-sm font-bold text-[var(--text-main)]">
-                                                {students.filter(s => s.status === 'checked').slice(0, 5).map((s, idx) => (
+                                                {students.filter(s => s.status === 'checked' && s.teacherId && s.teacherId.name).slice(0, 5).map((s, idx) => (
                                                     <tr key={s._id} data-aos="fade-left" data-aos-delay={idx * 50} className="border-b border-[var(--border-main)] last:border-0 hover:bg-[var(--bg-main)] transition-colors">
                                                         <td className="p-4">
                                                             <p className="font-bold">{s.fullName}</p>
                                                             <p className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest">{s.chosenSubject}</p>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <p className="text-[10px] font-black uppercase text-indigo-500">{s.teacherId?.name || '---'}</p>
                                                         </td>
                                                         <td className="p-4 text-right"><span className="text-indigo-500">{s.score}</span></td>
                                                         <td className="p-4 text-right">
@@ -660,7 +747,7 @@ const AdminDashboard = () => {
                                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/20' : 'bg-white/10 text-white'}`}>{i + 1}</div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-black text-xs uppercase truncate">{st.fullName}</p>
-                                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{st.chosenSubject}</p>
+                                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{st.chosenSubject} • {st.teacherId?.name || '---'}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm font-black text-emerald-400">{st.score}%</p>
@@ -713,14 +800,23 @@ const AdminDashboard = () => {
                         {!selectedDept ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {stats.dStats.map((d, i) => (
-                                    <div key={i} onClick={() => setSelectedDept(d.name)} className="p-10 bg-[var(--bg-card)] shadow-sm border border-[var(--border-main)] rounded-[56px] hover:border-[#38BDF8]/40 hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden">
-                                        <button
-                                            onClick={(e) => handleDeleteSubject(e, d.name)}
-                                            className="absolute top-6 right-6 p-3 bg-rose-500/10 text-rose-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white z-20"
-                                            title="O'chirish"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div key={i} onClick={() => setSelectedDept(d.name)} className="p-10 pt-20 bg-[var(--bg-card)] shadow-sm border border-[var(--border-main)] rounded-[56px] hover:border-[#38BDF8]/40 hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden">
+                                        <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-20">
+                                            <button
+                                                onClick={(e) => handleEditSubject(e, d.name)}
+                                                className="p-3 bg-indigo-500/10 text-indigo-500 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/20"
+                                                title="Tahrirlash"
+                                            >
+                                                <Edit3 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteSubject(e, d.name)}
+                                                className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/20"
+                                                title="O'chirish"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                         <div className="flex justify-between items-start mb-8">
                                             <div className="bg-[var(--bg-main)] p-6 rounded-[32px] group-hover:bg-blue-50 group-hover:text-blue-600 transition-all text-[var(--text-main)]"><GraduationCap size={40} /></div>
                                             <div className="text-right"><p className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-1">{t.qualityRate}</p><p className="text-3xl font-black text-emerald-500">{d.quality}%</p></div>
@@ -752,8 +848,23 @@ const AdminDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4 relative z-10">
-                                                <div className="p-5 bg-[var(--bg-main)] rounded-[28px] text-center"><p className="text-[9px] font-black text-[var(--text-muted)] mb-1 uppercase tracking-widest">{t.tasks}</p><p className="text-xl font-black text-[var(--text-main)]">{tData.tasks?.length || 0}</p></div>
-                                                <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-[28px] text-center"><p className="text-[9px] font-black text-[#38BDF8] mb-1 uppercase tracking-widest">{t.activity}</p><p className="text-xl font-black text-[var(--text-main)]">High</p></div>
+                                                <div className="p-5 bg-[var(--bg-main)] rounded-[28px] text-center">
+                                                    <p className="text-[9px] font-black text-[var(--text-muted)] mb-1 uppercase tracking-widest">{t.studentsCount}</p>
+                                                    <p className="text-xl font-black text-[var(--text-main)]">
+                                                        {students.filter(s => {
+                                                            if (s.teacherId === tData._id || s.teacherId?._id === tData._id) return true;
+                                                            const teacherGroupIds = groups.filter(g => g.teacherId === tData._id || g.teacherId?._id === tData._id).map(g => g._id);
+                                                            if (s.groupId && (teacherGroupIds.includes(s.groupId) || teacherGroupIds.includes(s.groupId?._id))) return true;
+                                                            return false;
+                                                        }).length}
+                                                    </p>
+                                                </div>
+                                                <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-[28px] text-center">
+                                                    <p className="text-[9px] font-black text-[#38BDF8] mb-1 uppercase tracking-widest">{t.tests}</p>
+                                                    <p className="text-xl font-black text-[var(--text-main)]">
+                                                        {activeTests.filter(test => test.teacherId === tData._id || test.teacherId?._id === tData._id).length}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -830,14 +941,17 @@ const AdminDashboard = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8">
                                         {filteredTeachers.map(tData => (
-                                            <div key={tData._id} className="p-8 bg-[var(--bg-main)] rounded-[40px] border border-[var(--border-main)] hover:shadow-xl transition-all group relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
+                                            <div key={tData._id} className="p-8 pt-20 bg-[var(--bg-main)] rounded-[40px] border border-[var(--border-main)] hover:shadow-xl transition-all group relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all flex gap-2 z-20">
+                                                    <button onClick={() => { setEditTeacherData({ id: tData._id, name: tData.name, email: tData.email, subject: tData.subject }); setShowEditTeacherModal(true); }} className="p-3 bg-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/20 hover:scale-110 active:scale-95 transition-all" title="Tahrirlash"><Edit3 size={18} /></button>
                                                     <button onClick={() => { setTaskData({ ...taskData, teacherId: tData._id, teacherName: tData.name }); setShowTaskModal(true); }} className="p-3 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:scale-110 active:scale-95 transition-all" title="Vazifa berish"><MessageSquarePlus size={18} /></button>
                                                     <button onClick={() => { setResetData({ ...resetData, id: tData._id, name: tData.name }); setShowResetModal(true); }} className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-110 active:scale-95 transition-all" title="Parolni o'zgartirish"><Key size={18} /></button>
                                                     <button onClick={() => handleDeleteTeacher(tData._id, tData.name)} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-110 active:scale-95 transition-all" title="O'chirish"><Trash2 size={18} /></button>
                                                 </div>
                                                 <div className="flex items-center gap-6 mb-8 relative z-10">
-                                                    <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-black shadow-xl">{tData.name[0]}</div>
+                                                    <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-black shadow-xl overflow-hidden">
+                                                        {tData.image ? <img src={tData.image} alt={tData.name} className="w-full h-full object-cover" /> : tData.name[0]}
+                                                    </div>
                                                     <div className="flex-1">
                                                         <h4 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tight mb-1">{tData.name}</h4>
                                                         <p className="text-[10px] font-bold text-[var(--text-muted)] truncate">{tData.email}</p>
@@ -846,12 +960,23 @@ const AdminDashboard = () => {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4 relative z-10">
                                                     <div className="p-5 bg-[var(--bg-main)] rounded-[28px] text-center">
-                                                        <p className="text-[9px] font-black text-[var(--text-muted)] mb-1 uppercase tracking-widest">Guruhlar</p>
-                                                        <p className="text-xl font-black text-[var(--text-main)]">{groups.filter(g => g.teacherId === tData._id || g.teacherId?._id === tData._id).length}</p>
+                                                        <p className="text-[9px] font-black text-[var(--text-muted)] mb-1 uppercase tracking-widest">{t.studentsCount}</p>
+                                                        <p className="text-xl font-black text-[var(--text-main)]">
+                                                            {students.filter(s => {
+                                                                // 1. Direct assignment
+                                                                if (s.teacherId === tData._id || s.teacherId?._id === tData._id) return true;
+                                                                // 2. Via group assignment
+                                                                const teacherGroupIds = groups.filter(g => g.teacherId === tData._id || g.teacherId?._id === tData._id).map(g => g._id);
+                                                                if (s.groupId && (teacherGroupIds.includes(s.groupId) || teacherGroupIds.includes(s.groupId?._id))) return true;
+                                                                return false;
+                                                            }).length}
+                                                        </p>
                                                     </div>
                                                     <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-[28px] text-center">
-                                                        <p className="text-[9px] font-black text-[#38BDF8] mb-1 uppercase tracking-widest">O'quvchilar</p>
-                                                        <p className="text-xl font-black text-[var(--text-main)]">{students.filter(s => s.teacherId === tData._id || s.teacherId?._id === tData._id).length}</p>
+                                                        <p className="text-[9px] font-black text-[#38BDF8] mb-1 uppercase tracking-widest">{t.tests}</p>
+                                                        <p className="text-xl font-black text-[var(--text-main)]">
+                                                            {activeTests.filter(test => test.teacherId === tData._id || test.teacherId?._id === tData._id).length}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -865,29 +990,69 @@ const AdminDashboard = () => {
 
 
                 {/* TEST TOPICS TAB */}
+                {/* TEST TOPICS TAB */}
                 {activeTab === 'topics' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in zoom-in duration-500">
-                        {activeTests.map(test => (
-                            <div key={test._id} className="bg-[var(--bg-card)] p-8 rounded-[48px] border border-[var(--border-main)] hover:shadow-2xl transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
-                                    <button onClick={async () => {
-                                        const config = { headers: { Authorization: `Bearer ${token}` } };
-                                        try {
-                                            const res = await axios.get(`${API_URL}/tests/${test._id}`, config);
-                                            setViewingTest(res.data);
-                                        } catch (err) { toast.error('Yuklashda xatolik'); }
-                                    }} className="p-3 bg-blue-500 text-white rounded-2xl hover:scale-110 transition-all"><Eye size={18} /></button>
-                                    <button onClick={async () => { if (window.confirm('O\'chirilsinmi?')) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`${API_URL}/tests/${test._id}`, config); toast.success('O\'chirildi'); fetchData(); } catch (err) { toast.error('Xatoplik'); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
+                    <div className="space-y-8 animate-in fade-in zoom-in duration-500">
+                        {/* Filter Section */}
+                        <div className="bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--border-main)] shadow-sm">
+                            <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter mb-6 flex items-center gap-3"><Users size={20} className="text-blue-500" /> Testlarni Filtrlash</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="relative">
+                                    <select
+                                        className="w-full px-6 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] appearance-none"
+                                        value={testFilter}
+                                        onChange={e => setTestFilter(e.target.value)}
+                                    >
+                                        <option value="">Barcha Fanlar</option>
+                                        {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
+                                    </select>
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ChevronLeft size={16} className="-rotate-90" /></div>
                                 </div>
-                                <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center mb-6"><BookOpen size={30} /></div>
-                                <h4 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tight mb-2">{test.topic}</h4>
-                                <div className="flex items-center gap-4 text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">
-                                    <span>{test.count} Savol</span>
-                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                    <span>{test.subject}</span>
+                                <div className="relative">
+                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input type="text" placeholder="Ustoz yoki Mavzu qidirish..." className="w-full pl-12 pr-6 py-4 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-3xl text-sm font-bold outline-none text-[var(--text-main)]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {activeTests
+                                .filter(t => t.teacherId) // Filter out orphaned tests
+                                .filter(t => !testFilter || t.subject === testFilter)
+                                .filter(t => !searchQuery || t.topic.toLowerCase().includes(searchQuery.toLowerCase()) || (t.teacherId?.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map(test => (
+                                    <div key={test._id} className="bg-[var(--bg-card)] p-8 rounded-[48px] border border-[var(--border-main)] hover:shadow-2xl transition-all group relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
+                                            <button onClick={async () => {
+                                                const config = { headers: { Authorization: `Bearer ${token}` } };
+                                                try {
+                                                    const res = await axios.get(`${API_URL}/tests/${test._id}`, config);
+                                                    setViewingTest(res.data);
+                                                } catch (err) { toast.error('Yuklashda xatolik'); }
+                                            }} className="p-3 bg-blue-500 text-white rounded-2xl hover:scale-110 transition-all"><Eye size={18} /></button>
+                                            <button onClick={async () => { if (window.confirm('O\'chirilsinmi?')) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`${API_URL}/tests/${test._id}`, config); toast.success('O\'chirildi'); fetchData(); } catch (err) { toast.error('Xatoplik'); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
+                                        </div>
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center"><BookOpen size={30} /></div>
+                                            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">{test.subject}</span>
+                                        </div>
+
+                                        <h4 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tight mb-2 line-clamp-2 min-h-[56px]">{test.topic}</h4>
+
+                                        <div className="flex items-center gap-2 mb-4 p-3 bg-[var(--bg-main)] rounded-2xl">
+                                            <User size={14} className="text-[var(--text-muted)]" />
+                                            <p className="text-xs font-bold text-[var(--text-main)]">{teachers.find(t => t._id === (test.teacherId?._id || test.teacherId))?.name || 'Admin'}</p>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest border-t border-[var(--border-main)] pt-4">
+                                            <span>{test.count} Savol</span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                            <span>Active</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            {activeTests.length === 0 && <p className="col-span-3 text-center text-[var(--text-muted)] py-10">Testlar topilmadi</p>}
+                        </div>
                     </div>
                 )}
 
@@ -930,7 +1095,7 @@ const AdminDashboard = () => {
                                             <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center"><Users size={20} /></div>
                                             <div>
                                                 <p className="font-black text-[var(--text-main)] uppercase text-sm">{g.name}</p>
-                                                <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase">{g.subject} • {g.teacherId?.name || 'Ustoz'}</p>
+                                                <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase">{g.subject} • {teachers.find(t => t._id === (g.teacherId?._id || g.teacherId))?.name || 'Sistema'}</p>
                                             </div>
                                         </div>
                                         <button onClick={() => handleDeleteGroup(g._id)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={16} /></button>
@@ -975,6 +1140,7 @@ const AdminDashboard = () => {
                                         <tr>
                                             <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">ID</th>
                                             <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">O'quvchi</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">USTOZ</th>
                                             <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">Guruh / Yo'nalish</th>
                                             <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">Natija</th>
                                             <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">Amallar</th>
@@ -987,8 +1153,10 @@ const AdminDashboard = () => {
                                                 <td className="p-4">
                                                     <div>
                                                         <p className="font-bold">{s.fullName}</p>
-                                                        <p className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest">{s.teacherId?.name || 'Sistema'}</p>
                                                     </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <p className="text-[10px] font-black uppercase text-indigo-500">{s.teacherId?.name || 'Sistema'}</p>
                                                 </td>
                                                 <td className="p-4">
                                                     <div>
@@ -1033,6 +1201,7 @@ const AdminDashboard = () => {
                                 <thead>
                                     <tr className="border-b border-[var(--border-main)]">
                                         <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">O'quvchi</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Ustoz</th>
                                         <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Yo'nalish</th>
                                         <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Savollar</th>
                                         <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Correct</th>
@@ -1051,6 +1220,9 @@ const AdminDashboard = () => {
                                                         <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">ID: {s.loginId}</p>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="p-6">
+                                                <p className="text-[10px] font-black uppercase text-indigo-500">{s.teacherId?.name || '---'}</p>
                                             </td>
                                             <td className="p-6"><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">{s.chosenSubject}</span></td>
                                             <td className="p-6 text-center font-bold text-[var(--text-main)]">{s.testId?.count || '-'}</td>
@@ -1086,15 +1258,20 @@ const AdminDashboard = () => {
                                         className={`p-5 rounded-[32px] border cursor-pointer transition-all ${selectedTask?._id === task._id ? 'bg-blue-600 text-white border-blue-600 shadow-xl' : 'bg-[var(--bg-main)] border-[var(--border-main)] hover:border-blue-500/50 text-[var(--text-main)]'}`}
                                     >
                                         <div className="flex justify-between items-start mb-2 group/task">
-                                            <div>
-                                                <h4 className="font-black text-sm uppercase truncate max-w-[120px]">{task.teacher?.name || 'Ustoz'}</h4>
-                                                <p className={`text-[8px] font-black uppercase tracking-widest ${selectedTask?._id === task._id ? 'text-blue-100' : 'text-[var(--text-muted)]'}`}>
-                                                    {task.title}
-                                                </p>
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="w-10 h-10 min-w-[40px] rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-black overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+                                                    {task.teacher?.image ? <img src={task.teacher.image} alt={task.teacher.name} className="w-full h-full object-cover" /> : task.teacher?.name?.[0]}
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <h4 className="font-black text-sm uppercase truncate max-w-[120px]">{task.teacher?.name || 'Ustoz'}</h4>
+                                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${selectedTask?._id === task._id ? 'text-blue-100' : 'text-[var(--text-muted)]'}`}>
+                                                        {task.teacher?.subject || 'Fan yo\'q'}
+                                                    </p>
+                                                </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
                                                 <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${task.status === 'completed' ? 'bg-emerald-500/20' : task.status === 'in_progress' ? 'bg-blue-500/20' : 'bg-amber-500/20'}`}>
-                                                    {task.status}
+                                                    {task.status === 'completed' ? t.completed : task.status === 'in_progress' ? t.in_progress : t.pending}
                                                 </span>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDeleteTask(task._id); }}
@@ -1127,10 +1304,12 @@ const AdminDashboard = () => {
                                 <>
                                     <div className="p-8 border-b border-[var(--border-main)] bg-[var(--bg-main)] opacity-80 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black">{selectedTask.teacher?.name?.[0]}</div>
+                                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black overflow-hidden shadow-md">
+                                                {selectedTask.teacher?.image ? <img src={selectedTask.teacher.image} alt={selectedTask.teacher.name} className="w-full h-full object-cover" /> : selectedTask.teacher?.name?.[0]}
+                                            </div>
                                             <div>
                                                 <h4 className="font-black text-[var(--text-main)] uppercase tracking-tight">{selectedTask.teacher?.name}</h4>
-                                                <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Suhbat ochiq</p>
+                                                <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">{selectedTask.teacher?.subject || '---'}</p>
                                             </div>
                                         </div>
                                         <div className="flex bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-main)] gap-1">
@@ -1140,7 +1319,7 @@ const AdminDashboard = () => {
                                                     onClick={() => handleUpdateTaskStatus(selectedTask._id, st)}
                                                     className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${selectedTask.status === st ? 'bg-blue-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-black/5'}`}
                                                 >
-                                                    {st}
+                                                    {st === 'completed' ? t.completed : st === 'in_progress' ? t.in_progress : t.pending}
                                                 </button>
                                             ))}
                                         </div>
@@ -1148,13 +1327,22 @@ const AdminDashboard = () => {
 
                                     <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                                         {selectedTask.messages.map((msg, i) => (
-                                            <div key={i} className={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
-                                                <div className={`max-w-[70%] p-5 rounded-[28px] shadow-sm ${msg.sender === 'admin' ? 'bg-[#38BDF8] text-white rounded-tr-none' : 'bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-main)] rounded-tl-none'}`}>
-                                                    <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                            <div key={i} className={`flex items-start gap-3 ${msg.sender === 'admin' ? 'flex-row-reverse' : ''}`}>
+                                                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white dark:border-slate-800 shadow-sm bg-slate-100 flex items-center justify-center mt-1">
+                                                    {msg.sender === 'admin' ? (
+                                                        profileData.image ? <img src={profileData.image} alt="Admin" className="w-full h-full object-cover" /> : <div className="text-blue-600 font-bold">AD</div>
+                                                    ) : (
+                                                        selectedTask.teacher?.image ? <img src={selectedTask.teacher.image} alt="Teacher" className="w-full h-full object-cover" /> : <div className="text-indigo-600 font-bold">{selectedTask.teacher?.name?.[0]}</div>
+                                                    )}
                                                 </div>
-                                                <span className="text-[9px] font-black text-[var(--text-muted)] mt-2 px-2 uppercase tracking-tighter">
-                                                    {msg.sender === 'admin' ? 'Siz (Admin)' : selectedTask.teacher?.name} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                <div className={`flex flex-col max-w-[70%] ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
+                                                    <div className={`p-5 rounded-[28px] shadow-sm ${msg.sender === 'admin' ? 'bg-[#38BDF8] text-white rounded-tr-none' : 'bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-main)] rounded-tl-none'}`}>
+                                                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                                    </div>
+                                                    <span className="text-[9px] font-black text-[var(--text-muted)] mt-2 px-2 uppercase tracking-tighter">
+                                                        {msg.sender === 'admin' ? 'Siz (Admin)' : selectedTask.teacher?.name} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -1258,7 +1446,7 @@ const AdminDashboard = () => {
                                         <div key={s._id} className="p-4 bg-[var(--bg-main)] rounded-3xl border border-[var(--border-main)] flex justify-between items-center">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black">{i + 1}</div>
-                                                <div><p className="font-bold text-[var(--text-main)] text-sm">{s.fullName}</p><p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">ID: {s.loginId}</p></div>
+                                                <div><p className="font-bold text-[var(--text-main)] text-sm">{s.fullName}</p><p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">ID: {s.loginId} • {s.teacherId?.name || '---'}</p></div>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase ${s.status === 'checked' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{s.status === 'checked' ? `${s.score} ball` : 'Kutilmoqda'}</span>
@@ -1418,7 +1606,7 @@ const AdminDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-lg font-black text-[var(--text-main)]">{viewingResultStudent.fullName}</p>
-                                                <p className="text-xs font-bold text-blue-500">{t.id_login}: {viewingResultStudent.loginId}</p>
+                                                <p className="text-xs font-bold text-blue-500">{t.id_login}: {viewingResultStudent.loginId} • {viewingResultStudent.teacherId?.name || '---'}</p>
                                                 <p className="text-xs font-bold text-[var(--text-muted)] mt-1">{t.group}: {viewingResultStudent.groupId?.name || t.unassigned}</p>
                                             </div>
                                         </div>
@@ -1490,6 +1678,64 @@ const AdminDashboard = () => {
                             <div className="p-6 border-t border-[var(--border-main)] bg-[var(--bg-main)] print:hidden">
                                 <button onClick={() => setViewingResultStudent(null)} className="w-full py-3 bg-[var(--bg-card)] text-[var(--text-main)] rounded-[20px] font-bold text-sm border border-[var(--border-main)] hover:bg-[var(--bg-main)] transition-all">{t.cancel}</button>
                             </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Edit Teacher Modal */}
+            {
+                showEditTeacherModal && (
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-[var(--bg-card)] p-8 rounded-[48px] max-w-md w-full border border-[var(--border-main)] shadow-2xl scale-100 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">Tahrirlash</h3>
+                                <button onClick={() => setShowEditTeacherModal(false)} className="p-3 hover:bg-[var(--bg-main)] rounded-2xl transition-all"><X size={20} className="text-[var(--text-muted)]" /></button>
+                            </div>
+                            <form onSubmit={handleUpdateTeacher} className="space-y-6">
+                                <div className="flex justify-center mb-6">
+                                    <div className="relative group cursor-pointer">
+                                        <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--bg-main)] border-4 border-[var(--bg-card)] shadow-xl flex items-center justify-center">
+                                            {editTeacherData.image ? (
+                                                <img src={editTeacherData.image} alt="Teacher" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User size={40} className="text-slate-300" />
+                                            )}
+                                        </div>
+                                        <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 text-white rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform">
+                                            <Camera size={16} />
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleTeacherImageUpload} />
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Ism Familiya</label>
+                                    <input type="text" placeholder="..." className="w-full px-6 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all" value={editTeacherData.name} onChange={e => setEditTeacherData({ ...editTeacherData, name: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Email</label>
+                                    <input type="email" placeholder="..." className="w-full px-6 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all" value={editTeacherData.email} onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Fan</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full pl-6 pr-12 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none appearance-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            value={editTeacherData.subject}
+                                            onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })}
+                                            required
+                                        >
+                                            <option value="" disabled>Tanlang...</option>
+                                            {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
+                                        </select>
+                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ChevronLeft size={16} className="-rotate-90" /></div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 pt-4">
+                                    <button type="button" onClick={() => setShowEditTeacherModal(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">Bekor qilish</button>
+                                    <button type="submit" className="py-4 bg-indigo-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all">Saqlash</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )

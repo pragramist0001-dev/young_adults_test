@@ -105,7 +105,12 @@ export const translations = {
         send_message: "Xabar yuborish",
         new_task: "Yangi Vazifa",
         conversations: "Suhbatlar",
-        no_tasks_chat: "Vazifalar yoki suhbatlar yo'q"
+        no_tasks_chat: "Vazifalar yoki suhbatlar yo'q",
+        chat_open: "Suhbat ochiq",
+        pending: "Kutilmoqda",
+        in_progress: "Jarayonda",
+        completed: "Tugallangan",
+        tests: "Testlar"
     },
     ru: {
         dashboard: "Дашборд",
@@ -208,7 +213,12 @@ export const translations = {
         finish_confirm: "Вы уверены, что хотите завершить тест?",
         score_ball: "балл",
         next: "Далее",
-        login: "Войти"
+        login: "Войти",
+        chat_open: "Чат открыт",
+        pending: "В ожидании",
+        in_progress: "В процессе",
+        completed: "Завершено",
+        tests: "Тесты"
     },
     en: {
         dashboard: "Dashboard",
@@ -311,6 +321,11 @@ export const translations = {
         finish_confirm: "Are you sure you want to finish the test?",
         score_ball: "score",
         next: "Next",
-        login: "Login"
+        login: "Login",
+        chat_open: "Chat open",
+        pending: "Pending",
+        in_progress: "In Progress",
+        completed: "Completed",
+        tests: "Tests"
     }
 };

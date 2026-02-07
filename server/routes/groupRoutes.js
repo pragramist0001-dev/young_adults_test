@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createGroup, getMyGroups, deleteGroup, assignTestToGroup } = require('../controllers/groupController');
+const { createGroup, getMyGroups, deleteGroup, assignTestToGroup, updateGroup } = require('../controllers/groupController');
 // Update routes to allow admin access where necessary
 const { protect, teacher, admin } = require('../middleware/authMiddleware');
 
@@ -16,6 +16,7 @@ const teacherOrAdmin = (req, res, next) => {
 router.post('/', protect, teacherOrAdmin, createGroup);
 router.get('/', protect, teacherOrAdmin, getMyGroups);
 router.put('/:id/assign-test', protect, teacherOrAdmin, assignTestToGroup);
+router.put('/:id', protect, teacherOrAdmin, updateGroup);
 router.delete('/:id', protect, teacherOrAdmin, deleteGroup);
 
 module.exports = router;

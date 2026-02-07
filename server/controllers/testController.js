@@ -194,3 +194,17 @@ exports.deleteTest = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Get Total Tests Count
+exports.getTestsCount = async (req, res) => {
+    try {
+        if (!isDbConnected()) {
+            const tests = readData('Test') || [];
+            return res.json(tests.length);
+        }
+        const count = await Test.countDocuments({ isActive: true });
+        res.json(count);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -237,5 +237,229 @@
     "subject": "Front-end",
     "teacherId": "1769953841309",
     "createdAt": "2026-02-01T13:52:49.856Z"
+  },
+  {
+    "_id": "1770031911981",
+    "questionText": "a tegi nimani bildiradi ?",
+    "options": [
+      "A",
+      "B",
+      "c",
+      "d"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770031477462",
+    "createdAt": "2026-02-02T11:31:51.981Z"
+  },
+  {
+    "_id": "1770031911999",
+    "questionText": "azdaefds",
+    "options": [
+      "asas",
+      "saaad",
+      "sadsadsa",
+      "sdaasd"
+    ],
+    "correctOption": 1,
+    "subject": "Back-end",
+    "teacherId": "1770031477462",
+    "createdAt": "2026-02-02T11:31:51.999Z"
+  },
+  {
+    "_id": "1770034484425",
+    "questionText": "Savol 1",
+    "options": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1770034229868",
+    "createdAt": "2026-02-02T12:14:44.425Z"
+  },
+  {
+    "_id": "1770034484466",
+    "questionText": "savol 2",
+    "options": [
+      "s",
+      "a",
+      "s",
+      "s"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1770034229868",
+    "createdAt": "2026-02-02T12:14:44.466Z"
+  },
+  {
+    "_id": "1770394831427",
+    "questionText": "savol 1",
+    "options": [
+      "a",
+      "a",
+      "s",
+      "d"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770394701740",
+    "createdAt": "2026-02-06T16:20:31.427Z"
+  },
+  {
+    "_id": "1770394831437",
+    "questionText": "savol 2",
+    "options": [
+      "3",
+      "s",
+      "s",
+      "s"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770394701740",
+    "createdAt": "2026-02-06T16:20:31.437Z"
+  },
+  {
+    "_id": "1770400271633",
+    "questionText": "savol 1",
+    "options": [
+      "a",
+      "b",
+      "s",
+      "a"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770400158588",
+    "createdAt": "2026-02-06T17:51:11.633Z"
+  },
+  {
+    "_id": "1770400271642",
+    "questionText": "savol 2",
+    "options": [
+      "qq",
+      "qq",
+      "q",
+      "q"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770400158588",
+    "createdAt": "2026-02-06T17:51:11.642Z"
+  },
+  {
+    "_id": "1770401205497",
+    "questionText": "savol 1",
+    "options": [
+      "1",
+      "1",
+      "2",
+      "3"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770401132674",
+    "createdAt": "2026-02-06T18:06:45.497Z"
+  },
+  {
+    "_id": "1770454641983",
+    "questionText": "savol 1",
+    "options": [
+      "qqw",
+      "sasa",
+      "sas",
+      "sasa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770454483623",
+    "createdAt": "2026-02-07T08:57:21.983Z"
+  },
+  {
+    "_id": "1770454641999",
+    "questionText": "savol 2",
+    "options": [
+      "sasa",
+      "sa",
+      "sasa",
+      "sass"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770454483623",
+    "createdAt": "2026-02-07T08:57:21.999Z"
+  },
+  {
+    "_id": "1770455735070",
+    "questionText": "savol 1",
+    "options": [
+      "sas",
+      "sas",
+      "sa",
+      "sas"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770455700313",
+    "createdAt": "2026-02-07T09:15:35.070Z"
+  },
+  {
+    "_id": "1770455735081",
+    "questionText": "savol 2",
+    "options": [
+      "sas",
+      "sasa",
+      "sasa",
+      "sasa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770455700313",
+    "createdAt": "2026-02-07T09:15:35.081Z"
+  },
+  {
+    "_id": "1770456155761",
+    "questionText": "savil 1",
+    "options": [
+      "d",
+      "hh",
+      "ll",
+      "jj"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770456051482",
+    "createdAt": "2026-02-07T09:22:35.761Z"
+  },
+  {
+    "_id": "1770465049427",
+    "questionText": "das",
+    "options": [
+      "das",
+      "dsad",
+      "sadsa",
+      "dsadsa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770465023344",
+    "createdAt": "2026-02-07T11:50:49.427Z"
+  },
+  {
+    "_id": "1770465049434",
+    "questionText": "dasdsa",
+    "options": [
+      "dsasa",
+      "dsasd",
+      "dasda",
+      "sdadsa"
+    ],
+    "correctOption": 0,
+    "subject": "Back-end",
+    "teacherId": "1770465023344",
+    "createdAt": "2026-02-07T11:50:49.434Z"
   }
 ]

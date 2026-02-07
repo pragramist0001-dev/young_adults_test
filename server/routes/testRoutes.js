@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createTest, getMyTests, getTestById, addQuestions, deleteTest } = require('../controllers/testController');
+const { createTest, getMyTests, getTestById, addQuestions, deleteTest, getTestsCount } = require('../controllers/testController');
 // Update routes to allow admin access
 const { protect, teacher, admin } = require('../middleware/authMiddleware');
 
@@ -13,6 +13,7 @@ const teacherOrAdmin = (req, res, next) => {
     }
 };
 
+router.get('/count', protect, teacherOrAdmin, getTestsCount);
 router.post('/', protect, teacherOrAdmin, createTest);
 router.get('/', protect, teacherOrAdmin, getMyTests);
 router.get('/:id', protect, teacherOrAdmin, getTestById);

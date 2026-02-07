@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { logout } from '../features/auth/authSlice';
@@ -44,20 +44,29 @@ const TeacherDashboard = () => {
     const [testQuestions, setTestQuestions] = useState([]); // Questions in the viewing test
     const [viewingGroup, setViewingGroup] = useState(null); // For viewing group details
     const [groupStudents, setGroupStudents] = useState([]); // Students in the viewing group
-    const [statsTimeFilter, setStatsTimeFilter] = useState('all'); // all, weekly, monthly
 
     const [students, setStudents] = useState([]);
     const [newStudentName, setNewStudentName] = useState('');
     const [studentSearchQuery, setStudentSearchQuery] = useState('');
     const [studentStatusFilter, setStudentStatusFilter] = useState('all'); // all, pending, checked
+    const [viewingResultStudent, setViewingResultStudent] = useState(null); // Added missing state
 
     // Task & Chat State
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
     const [chatMessage, setChatMessage] = useState('');
+    const [statsTimeFilter, setStatsTimeFilter] = useState('all'); // all, weekly, monthly
+    const [editingGroup, setEditingGroup] = useState(null);
+    const [editGroupName, setEditGroupName] = useState('');
+
+    // Early Access Approval State
+    const [pendingApprovals, setPendingApprovals] = useState([]);
+
     useEffect(() => {
         localStorage.setItem('teacherActiveTab', activeTab);
     }, [activeTab]);
+
+    const [adminInfo, setAdminInfo] = useState({ name: 'Admin', image: null });
 
     const config = {
         headers: { Authorization: `Bearer ${token}` }
@@ -80,7 +89,7 @@ const TeacherDashboard = () => {
 
     const fetchStudents = async () => {
         try {
-            const res = await axios.get(`${API_URL}/students/list/${user?.subject}`, config);
+            const res = await axios.get(`${API_URL}/students/mine`, config);
             setStudents(res.data);
         } catch (err) { handleError(err); }
     };
@@ -117,6 +126,24 @@ const TeacherDashboard = () => {
         } catch (err) { handleError(err); }
     };
 
+    const fetchPendingApprovals = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/students/pending-approvals`, config);
+            setPendingApprovals(res.data);
+        } catch (err) { handleError(err); }
+    };
+
+    const handleApproveEarlyAccess = async (studentId, approved) => {
+        const loadToast = toast.loading(approved ? 'Tasdiqlanmoqda...' : 'Rad etilmoqda...');
+        try {
+            await axios.post(`${API_URL}/students/approve-early-access/${studentId}`, { approved }, config);
+            toast.success(approved ? 'Tasdiqlandi!' : 'Rad etildi', { id: loadToast });
+            fetchPendingApprovals();
+        } catch (err) {
+            toast.error('Xatolik: ' + (err.response?.data?.message || err.message), { id: loadToast });
+        }
+    };
+
     const handleViewTest = async (test) => {
         try {
             setViewingTest(test);
@@ -151,11 +178,18 @@ const TeacherDashboard = () => {
             fetchStudents();
             fetchTests();
             fetchGroups();
+            fetchPendingApprovals();
         }
         if (token) {
             fetchProfile();
             fetchTasks();
             const taskInterval = setInterval(fetchTasks, 5000); // Polling for chat
+
+            // Fecth Admin Info
+            axios.get(`${API_URL}/auth/admin-info`, config)
+                .then(res => setAdminInfo(res.data))
+                .catch(err => console.log('Admin info fetch error', err));
+
             return () => clearInterval(taskInterval);
         }
     }, [user, token]);
@@ -369,22 +403,59 @@ const TeacherDashboard = () => {
         }
     };
 
-    const getFilteredStats = () => {
+    const stats = useMemo(() => {
         const now = new Date();
-        return students.filter(s => {
+        const fResults = students.filter(s => {
             if (s.status !== 'checked') return false;
             if (statsTimeFilter === 'all') return true;
-
             const submissionDate = new Date(s.updatedAt || s.createdAt);
             const diffDays = (now - submissionDate) / (1000 * 60 * 60 * 24);
-
             if (statsTimeFilter === 'weekly') return diffDays <= 7;
             if (statsTimeFilter === 'monthly') return diffDays <= 30;
             return true;
         });
-    };
 
-    const filteredStatsData = getFilteredStats();
+        const fStudents = students.filter(s => {
+            if (statsTimeFilter === 'all') return true;
+            const createdAt = new Date(s.createdAt);
+            const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+            if (statsTimeFilter === 'weekly') return diffDays <= 7;
+            if (statsTimeFilter === 'monthly') return diffDays <= 30;
+            return true;
+        });
+
+        const fTests = activeTests.filter(t => {
+            if (statsTimeFilter === 'all') return true;
+            const createdAt = new Date(t.createdAt);
+            const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+            if (statsTimeFilter === 'weekly') return diffDays <= 7;
+            if (statsTimeFilter === 'monthly') return diffDays <= 30;
+            return true;
+        });
+
+        const avgScore = fResults.length > 0 ? (fResults.reduce((acc, s) => acc + s.score, 0) / fResults.length).toFixed(1) : 0;
+        const passThreshold = 60;
+        const passedCount = fResults.filter(s => (s.score || 0) >= passThreshold).length;
+        const qualityRate = fResults.length > 0 ? ((passedCount / fResults.length) * 100).toFixed(0) : 0;
+
+        return { fResults, fStudents, fTests, avgScore, qualityRate };
+    }, [students, activeTests, statsTimeFilter]);
+
+    const filteredStatsData = stats.fResults;
+
+    const handleUpdateGroup = async (e) => {
+        e.preventDefault();
+        if (!editingGroup || !editGroupName.trim()) return;
+        try {
+            await axios.put(`${API_URL}/groups/${editingGroup._id}`, { name: editGroupName }, config);
+            toast.success('Guruh nomi yangilandi');
+            setEditingGroup(null);
+            setEditGroupName('');
+            fetchGroups();
+        } catch (err) {
+            toast.error('Xatolik: ' + err.message);
+        }
+    };
 
     // New Handlers
     const handleCreateTest = async (e) => {
@@ -472,6 +543,14 @@ const TeacherDashboard = () => {
                     <button onClick={() => setActiveTab('students')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'students' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
                         <CheckCircle2 size={18} /><span className="font-bold text-sm">{t.active_students}</span>
                     </button>
+                    <button onClick={() => setActiveTab('approvals')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'approvals' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20 text-white' : 'text-slate-400 hover:bg-slate-800'} relative`}>
+                        <div className="relative">
+                            <Clock size={18} />
+                            {pendingApprovals.length > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-[var(--bg-sidebar)] animate-pulse"></span>}
+                        </div>
+                        <span className="font-bold text-sm">Ruxsat So'rovlari</span>
+                        {pendingApprovals.length > 0 && <span className="ml-auto bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md">{pendingApprovals.length}</span>}
+                    </button>
                     <button onClick={() => setShowTaskModal(true)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-slate-800 relative group`}>
                         <div className="relative">
                             <MessageSquare size={18} className="group-hover:text-[#38BDF8] transition-colors" />
@@ -485,19 +564,22 @@ const TeacherDashboard = () => {
                     </button>
                 </nav>
 
-                <div className="absolute bottom-10 left-6 right-6 pt-6 border-t border-white/10 space-y-3">
-                    <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-[#38BDF8] text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:bg-slate-800'}`}>
-                        <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-700 flex items-center justify-center">
-                            {profileData.image ? <img src={profileData.image} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-emerald-500 flex items-center justify-center text-[10px] font-black text-white">{profileData.name?.[0] || user?.name?.[0]}</div>}
+                <div className="absolute bottom-10 left-6 right-6 pt-6 border-t border-white/10 space-y-3 flex-shrink-0 bg-[var(--bg-sidebar)] z-10">
+                    <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeTab === 'profile' ? 'bg-[#38BDF8] text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:bg-slate-800'}`}>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-700 flex items-center justify-center border-2 border-slate-600 shadow-inner">
+                            {profileData.image ? (
+                                <img src={profileData.image} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-emerald-500 flex items-center justify-center text-xs font-black text-white">{profileData.name?.[0] || user?.name?.[0]}</div>
+                            )}
                         </div>
-                        <span className="font-bold text-xs truncate">{profileData.name || user?.name}</span>
+                        <div className="flex-1 min-w-0 text-left">
+                            <span className="block font-black text-xs truncate leading-tight">{profileData.name || user?.name}</span>
+                            <span className="block text-[8px] font-black uppercase text-slate-500 tracking-tighter mt-1">{user?.subject || 'O\'qituvchi'}</span>
+                        </div>
                     </button>
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-black text-rose-400 border border-rose-400/10 rounded-xl hover:bg-rose-400/10 transition-all active:scale-95 uppercase tracking-widest"
-                    >
-                        <LogOut size={14} />
-                        <span>{t.logout}</span>
+                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[10px] font-black text-rose-400 border border-rose-400/10 rounded-xl hover:bg-rose-400/10 transition-all uppercase tracking-widest">
+                        <LogOut size={12} /><span>{t.logout}</span>
                     </button>
                 </div>
             </aside>
@@ -514,20 +596,41 @@ const TeacherDashboard = () => {
                                     <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">{t.activity}</p>
                                 </div>
                             </div>
-                            <div className="flex bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-main)]">
-                                {[
-                                    { id: 'all', label: t.all },
-                                    { id: 'weekly', label: t.weekly },
-                                    { id: 'monthly', label: t.monthly }
-                                ].map(f => (
-                                    <button
-                                        key={f.id}
-                                        onClick={() => setStatsTimeFilter(f.id)}
-                                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statsTimeFilter === f.id ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-                                    >
-                                        {f.label}
-                                    </button>
-                                ))}
+                            <div className="flex items-center gap-4">
+                                <div className="bg-[var(--bg-main)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-main)] mr-2">
+                                    {[
+                                        { id: 'all', label: t.all },
+                                        { id: 'weekly', label: t.weekly },
+                                        { id: 'monthly', label: t.monthly }
+                                    ].map(f => (
+                                        <button
+                                            key={f.id}
+                                            onClick={() => setStatsTimeFilter(f.id)}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statsTimeFilter === f.id ? 'bg-[var(--bg-card)] text-[#38BDF8] shadow-md' : 'text-slate-400'}`}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="h-10 w-[1px] bg-[var(--border-main)] mx-2 hidden lg:block"></div>
+
+                                <div
+                                    onClick={() => setActiveTab('profile')}
+                                    className="flex items-center gap-3 px-3 py-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] cursor-pointer hover:shadow-lg transition-all group"
+                                >
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner group-hover:scale-105 transition-transform">
+                                        {profileData.image ? (
+                                            <img src={profileData.image} alt="Teacher" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-emerald-500 font-black text-xs">{profileData.name?.[0] || user?.name?.[0]}</div>
+                                        )}
+                                    </div>
+                                    <div className="hidden sm:block text-left">
+                                        <p className="text-[11px] font-black text-[var(--text-main)] leading-none uppercase">{profileData.name || user?.name}</p>
+                                        <p className="text-[8px] font-black text-emerald-500 uppercase mt-1">Ustoz</p>
+                                    </div>
+                                </div>
                             </div>
                         </header>
 
@@ -538,7 +641,7 @@ const TeacherDashboard = () => {
                                     <div className="p-3 bg-blue-500/10 text-blue-500 rounded-2xl"><Users size={24} /></div>
                                     <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{t.studentsCount}</span>
                                 </div>
-                                <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">{students.length}</h4>
+                                <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">{stats.fStudents.length}</h4>
                                 <p className="text-xs font-bold text-emerald-500 mt-2 flex items-center gap-1"><TrendingUp size={12} /> {t.active_students}</p>
                             </div>
 
@@ -548,7 +651,7 @@ const TeacherDashboard = () => {
                                     <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-2xl"><ClipboardList size={24} /></div>
                                     <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{t.test_topics}</span>
                                 </div>
-                                <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">{activeTests.length}</h4>
+                                <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">{stats.fTests.length}</h4>
                                 <p className="text-xs font-bold text-blue-500 mt-2 flex items-center gap-1">{t.create_base}</p>
                             </div>
 
@@ -559,11 +662,9 @@ const TeacherDashboard = () => {
                                     <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{t.avgScore}</span>
                                 </div>
                                 <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">
-                                    {filteredStatsData.length > 0
-                                        ? (filteredStatsData.reduce((acc, s) => acc + s.score, 0) / filteredStatsData.length).toFixed(1)
-                                        : 0}
+                                    {stats.avgScore}
                                 </h4>
-                                <p className="text-xs font-bold text-emerald-500 mt-2 flex items-center gap-1">{t.qualityRate}</p>
+                                <p className="text-xs font-bold text-emerald-500 mt-2 flex items-center gap-1">{t.qualityRate}: {stats.qualityRate}%</p>
                             </div>
 
                             <div className="bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--border-main)] shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
@@ -573,7 +674,7 @@ const TeacherDashboard = () => {
                                     <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{t.submitted}</span>
                                 </div>
                                 <h4 className="text-4xl font-black text-[var(--text-main)] tracking-tighter">
-                                    {filteredStatsData.length}
+                                    {stats.fResults.length}
                                 </h4>
                                 <p className="text-xs font-bold text-amber-500 mt-2 flex items-center gap-1">{t.date}</p>
                             </div>
@@ -896,12 +997,35 @@ const TeacherDashboard = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {groups.map(g => (
                                         <div key={g._id} className="p-6 bg-[var(--bg-main)] rounded-[32px] border border-[var(--border-main)] hover:shadow-lg transition-all group">
-                                            <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center justify-between mb-6">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500"><Users size={20} /></div>
+                                                    <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center"><Users size={20} /></div>
                                                     <div>
-                                                        <p className="font-black text-[var(--text-main)] uppercase text-sm">{g.name}</p>
-                                                        <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">{g.subject}</p>
+                                                        {editingGroup?._id === g._id ? (
+                                                            <form onSubmit={handleUpdateGroup} className="flex items-center gap-2">
+                                                                <input
+                                                                    autoFocus
+                                                                    className="px-2 py-1 bg-[var(--bg-main)] border border-blue-500 rounded-lg text-sm font-black text-[var(--text-main)] outline-none"
+                                                                    value={editGroupName}
+                                                                    onChange={e => setEditGroupName(e.target.value)}
+                                                                />
+                                                                <button type="submit" className="text-emerald-500 p-1 hover:bg-emerald-500/10 rounded-lg transition-all"><Check size={16} /></button>
+                                                                <button type="button" onClick={() => setEditingGroup(null)} className="text-rose-500 p-1 hover:bg-rose-500/10 rounded-lg transition-all"><X size={16} /></button>
+                                                            </form>
+                                                        ) : (
+                                                            <>
+                                                                <p className="font-black text-[var(--text-main)] uppercase text-sm flex items-center gap-2">
+                                                                    {g.name}
+                                                                    <button
+                                                                        onClick={() => { setEditingGroup(g); setEditGroupName(g.name); }}
+                                                                        className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+                                                                    >
+                                                                        <Edit3 size={12} />
+                                                                    </button>
+                                                                </p>
+                                                                <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase">{g.subject}</p>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <button onClick={() => handleDeleteGroup(g._id)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={16} /></button>
@@ -1002,9 +1126,9 @@ const TeacherDashboard = () => {
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Add Student */}
-                            <div className="bg-[var(--bg-card)] p-10 rounded-[48px] shadow-sm border border-[var(--border-main)] h-fit">
+                            <div className="lg:col-span-1 bg-[var(--bg-card)] p-10 rounded-[48px] shadow-sm border border-[var(--border-main)] h-fit">
                                 <h3 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter mb-2">Yangi O'quvchi</h3>
                                 <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mb-8">ID Generatsiya qilish</p>
                                 <form onSubmit={handleAddStudent} className="space-y-6">
@@ -1121,7 +1245,9 @@ const TeacherDashboard = () => {
                                                             <td className="p-4 font-bold">{s.fullName}</td>
                                                             <td className="p-4 text-xs font-black uppercase text-[var(--text-muted)]">{s.groupId?.name || '---'}</td>
                                                             <td className="p-4">
-                                                                <span className="text-[10px] px-2 py-1 bg-blue-500/10 text-blue-500 rounded-lg border border-blue-500/20 truncate max-w-[80px] inline-block">{s.testId?.topic || '---'}</span>
+                                                                <span className="text-[10px] px-2 py-1 bg-blue-500/10 text-blue-500 rounded-lg border border-blue-500/20 truncate inline-block">
+                                                                    {activeTests.find(t => t._id === (s.testId?._id || s.testId))?.topic || s.testId?.topic || '---'}
+                                                                </span>
                                                             </td>
                                                             <td className="p-4 text-center font-black text-emerald-500">{s.status === 'checked' ? s.correctCount : '-'}</td>
                                                             <td className="p-4 text-center font-black text-rose-500">{s.status === 'checked' ? s.wrongCount : '-'}</td>
@@ -1471,11 +1597,18 @@ const TeacherDashboard = () => {
                                         <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4 custom-scrollbar">
                                             {selectedTask.messages.map((msg, i) => (
                                                 <div key={i} className={`flex flex-col ${msg.sender === 'teacher' ? 'items-end' : 'items-start'}`}>
-                                                    <div className={`max-w-[80%] p-4 rounded-[20px] shadow-sm ${msg.sender === 'teacher' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-main)] rounded-tl-none'}`}>
-                                                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                                    <div className="flex items-end gap-2 max-w-[85%]">
+                                                        {msg.sender === 'admin' && (
+                                                            <div className="w-8 h-8 min-w-[32px] rounded-full bg-blue-100 overflow-hidden border border-slate-200">
+                                                                {adminInfo.image ? <img src={adminInfo.image} alt="Admin" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-blue-500">A</div>}
+                                                            </div>
+                                                        )}
+                                                        <div className={`p-4 rounded-[20px] shadow-sm ${msg.sender === 'teacher' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-main)] rounded-tl-none'}`}>
+                                                            <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                                        </div>
                                                     </div>
                                                     <span className="text-[8px] font-bold text-[var(--text-muted)] mt-1 px-2 uppercase tracking-tighter">
-                                                        {msg.sender === 'teacher' ? 'Siz' : 'Admin'} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {msg.sender === 'teacher' ? 'Siz' : adminInfo.name} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                             ))}
@@ -1503,6 +1636,93 @@ const TeacherDashboard = () => {
                     </div>
                 )
             }
+
+            {/* Approvals Tab */}
+            {activeTab === 'approvals' && (
+                <div className="animate-in fade-in zoom-in duration-500 flex flex-col gap-6">
+                    <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-card)] p-6 rounded-[32px] shadow-sm border border-[var(--border-main)] gap-4">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-[var(--text-main)] hover:bg-black/5 rounded-xl transition-colors"><Menu size={24} /></button>
+                            <div>
+                                <h2 className="text-3xl font-black text-[var(--text-main)] uppercase tracking-tighter">Erta Kirish So'rovlari</h2>
+                                <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">O'quvchilar ruxsat kutmoqda</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                            <Clock size={16} className="text-amber-500" />
+                            <span className="text-sm font-black text-amber-500">{pendingApprovals.length} ta so'rov</span>
+                        </div>
+                    </header>
+
+                    {pendingApprovals.length === 0 ? (
+                        <div className="bg-[var(--bg-card)] p-12 rounded-[48px] border border-[var(--border-main)] text-center">
+                            <Clock size={48} className="mx-auto text-slate-300 mb-4" />
+                            <p className="text-lg font-bold text-[var(--text-muted)]">Hozircha so'rovlar yo'q</p>
+                            <p className="text-sm text-[var(--text-muted)] mt-2">O'quvchilar erta kirish uchun so'rov yuborganda bu yerda ko'rinadi</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6">
+                            {pendingApprovals.map(student => (
+                                <div key={student._id} className="bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--border-main)] shadow-sm hover:shadow-lg transition-all" data-aos="fade-up">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        <div className="flex-1">
+                                            <div className="flex items-start gap-4 mb-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-black text-lg shadow-lg">
+                                                    {student.fullName?.[0]?.toUpperCase() || 'O'}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-black text-[var(--text-main)]">{student.fullName}</h3>
+                                                    <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                        <span className="text-xs font-bold text-[var(--text-muted)]">ID: {student.loginId}</span>
+                                                        <span className="text-xs px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full border border-blue-500/20 font-bold">
+                                                            {student.groupId?.name || 'Guruhsiz'}
+                                                        </span>
+                                                        <span className="text-xs px-3 py-1 bg-purple-500/10 text-purple-500 rounded-full border border-purple-500/20 font-bold">
+                                                            {student.chosenSubject || user?.subject}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-4 p-4 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-main)]">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">So'rov vaqti</p>
+                                                    <p className="text-sm font-bold text-[var(--text-main)]">
+                                                        {new Date(student.earlyAccessRequest?.requestedAt).toLocaleString('uz-UZ', {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3 min-w-[200px]">
+                                            <button
+                                                onClick={() => handleApproveEarlyAccess(student._id, true)}
+                                                className="flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-sm hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+                                            >
+                                                <Check size={18} />
+                                                Tasdiqlash
+                                            </button>
+                                            <button
+                                                onClick={() => handleApproveEarlyAccess(student._id, false)}
+                                                className="flex items-center justify-center gap-2 px-6 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-rose-500/20"
+                                            >
+                                                <X size={18} />
+                                                Rad etish
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

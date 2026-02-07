@@ -69,3 +69,31 @@ exports.deleteSubject = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.updateSubject = async (req, res) => {
+    const { name } = req.params;
+    const { name: newName } = req.body;
+    if (!newName) return res.status(400).json({ message: 'New name is required' });
+
+    if (!isDbConnected()) {
+        try {
+            let subjects = readData('Subject');
+            const index = subjects.indexOf(name);
+            if (index === -1) return res.status(404).json({ message: 'Yo\'nalish topilmadi' });
+
+            subjects[index] = newName;
+            writeData('Subject', subjects);
+            return res.json({ message: 'Yo\'nalish yangilandi (Local)', name: newName });
+        } catch (e) {
+            return res.status(500).json({ message: e.message });
+        }
+    }
+
+    try {
+        const updated = await Subject.findOneAndUpdate({ name }, { name: newName }, { new: true });
+        if (!updated) return res.status(404).json({ message: 'Yo\'nalish topilmadi' });
+        res.json({ message: 'Yo\'nalish yangilandi', name: updated.name });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

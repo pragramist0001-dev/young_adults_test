@@ -112,3 +112,25 @@ exports.assignTestToGroup = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+exports.updateGroup = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!isDbConnected()) {
+            const groups = readData('Group') || [];
+            const idx = groups.findIndex(g => g._id === id);
+            if (idx === -1) return res.status(404).json({ message: 'Guruh topilmadi' });
+
+            groups[idx].name = name;
+            writeData('Group', groups);
+            return res.json(groups[idx]);
+        }
+
+        const group = await Group.findByIdAndUpdate(id, { name }, { new: true });
+        if (!group) return res.status(404).json({ message: 'Guruh topilmadi' });
+        res.json(group);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -57,6 +57,15 @@ exports.getTasks = async (req, res) => {
             } else {
                 filteredTasks = allTasks.filter(t => t.teacher === req.user.id);
             }
+            // Populate teacher for local mode
+            const users = readData('User');
+            filteredTasks = filteredTasks.map(t => {
+                const teacherObj = users.find(u => u._id === t.teacher);
+                return {
+                    ...t,
+                    teacher: teacherObj ? { _id: teacherObj._id, name: teacherObj.name, email: teacherObj.email, subject: teacherObj.subject } : { name: 'Unknown' }
+                };
+            });
             filteredTasks.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             return res.json(filteredTasks);
         }
@@ -67,7 +76,7 @@ exports.getTasks = async (req, res) => {
             tasks = await Promise.all(rawTasks.map(async (task) => {
                 let teacherDoc = null;
                 if (isObjectId(task.teacher)) {
-                    teacherDoc = await User.findById(task.teacher).select('name email').lean();
+                    teacherDoc = await User.findById(task.teacher).select('name email subject').lean();
                 }
                 return {
                     ...task,

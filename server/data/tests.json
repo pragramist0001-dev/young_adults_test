@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "_id": "1770031912018",
+    "teacherId": "1770031477462",
+    "subject": "Back-end",
+    "topic": "Front-end",
+    "questions": [
+      "1770031911999",
+      "1770031911981"
+    ],
+    "accessCode": "4377",
+    "count": 2,
+    "isActive": true,
+    "createdAt": "2026-02-02T11:31:52.018Z"
+  },
+  {
+    "_id": "1770394831443",
+    "teacherId": "1770394701740",
+    "subject": "Back-end",
+    "topic": "Back-end ",
+    "questions": [
+      "1770394831437",
+      "1770394831427"
+    ],
+    "accessCode": "3699",
+    "count": 2,
+    "isActive": true,
+    "createdAt": "2026-02-06T16:20:31.443Z"
+  },
+  {
+    "_id": "1770465049449",
+    "teacherId": "1770465023344",
+    "subject": "Back-end",
+    "topic": "dsads",
+    "questions": [
+      "1770465049427",
+      "1770465049434"
+    ],
+    "accessCode": "6698",
+    "count": 2,
+    "isActive": true,
+    "createdAt": "2026-02-07T11:50:49.449Z"
+  }
+]

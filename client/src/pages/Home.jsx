@@ -13,17 +13,36 @@ const Home = () => {
     const t = translations[language];
     const [loginId, setLoginId] = useState('');
     const [loading, setLoading] = useState(false);
+    const [blocked, setBlocked] = useState(false);
+    const [blockInfo, setBlockInfo] = useState(null);
+    const [requestingAccess, setRequestingAccess] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const handleChange = (e) => setLoginId(e.target.value);
 
+    const handleRequestEarlyAccess = async () => {
+        setRequestingAccess(true);
+        try {
+            const res = await axios.post(`${API_URL}/students/request-early-access`, { loginId });
+            toast.success(res.data.message);
+            // Refresh the block info to show updated approval status
+            handleSubmit({ preventDefault: () => { } });
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Xatolik yuz berdi';
+            toast.error(msg);
+        } finally {
+            setRequestingAccess(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setBlocked(false);
         const loadToast = toast.loading('Test tayyorlanmoqda...');
         try {
-            const res = await axios.post(`${API_URL} /students/start`, { loginId });
+            const res = await axios.post(`${API_URL}/students/start`, { loginId });
             const { studentId, chosenSubject, fullName, questions, testId } = res.data;
 
             let finalQuestions = questions;
@@ -38,10 +57,17 @@ const Home = () => {
             dispatch(setQuestions(finalQuestions));
 
             toast.success(`Xush kelibsiz, ${fullName} !`, { id: loadToast });
-            navigate(`/ test / ${chosenSubject} `);
+            navigate(`/test/${chosenSubject}`);
         } catch (err) {
-            const msg = (err.response && err.response.data && err.response.data.message) || err.message || 'Xatolik yuz berdi';
-            toast.error(msg, { id: loadToast });
+            if (err.response?.status === 403 && err.response?.data?.canRequestEarlyAccess) {
+                // Student is blocked by 7-day restriction
+                setBlocked(true);
+                setBlockInfo(err.response.data);
+                toast.error(err.response.data.message, { id: loadToast, duration: 5000 });
+            } else {
+                const msg = (err.response && err.response.data && err.response.data.message) || err.message || 'Xatolik yuz berdi';
+                toast.error(msg, { id: loadToast });
+            }
         } finally {
             setLoading(false);
         }
@@ -110,6 +136,68 @@ const Home = () => {
                                 {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                             </button>
                         </form>
+
+                        {/* Early Access Request UI */}
+                        {blocked && blockInfo && (
+                            <div className="mt-6 p-6 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700 rounded-3xl space-y-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-amber-900 dark:text-amber-100 mb-2">Kirish cheklangan</h3>
+                                        <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">{blockInfo.message}</p>
+
+                                        {blockInfo.earlyAccessRequest?.requested ? (
+                                            <div className="space-y-3">
+                                                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Ruxsat holati:</p>
+                                                <div className="p-4 rounded-2xl border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            {blockInfo.earlyAccessRequest.teacherApproved ? (
+                                                                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                                                </svg>
+                                                            )}
+                                                            <span className={`text-sm font-bold ${blockInfo.earlyAccessRequest.teacherApproved ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                                                                Ustoz
+                                                            </span>
+                                                        </div>
+                                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${blockInfo.earlyAccessRequest.teacherApproved ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>
+                                                            {blockInfo.earlyAccessRequest.teacherApproved ? 'Tasdiqlandi' : 'Kutilmoqda'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {blockInfo.earlyAccessRequest.teacherApproved ? (
+                                                    <p className="text-sm font-bold text-green-700 dark:text-green-300 flex items-center gap-2">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                        ✓ Ruxsat berildi! Qayta urinib ko'ring.
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-xs text-amber-700 dark:text-amber-300">Ustoz ruxsatini kutmoqda...</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={handleRequestEarlyAccess}
+                                                disabled={requestingAccess}
+                                                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-sm transition-all disabled:opacity-50"
+                                            >
+                                                {requestingAccess ? 'Yuborilmoqda...' : 'Ustozdan ruxsat oling'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4 text-center" data-aos="fade-up" data-aos-delay="600">

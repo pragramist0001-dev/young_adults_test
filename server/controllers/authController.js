@@ -64,10 +64,24 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
 
         // DEVELOPER BYPASS (For when MongoDB is not running)
+        // DEVELOPER BYPASS (For when MongoDB is not running)
         if (email === 'admin@edutest.com' && password === 'admin123') {
+            let adminUser = { id: 'mock-admin', name: 'Boss Admin (Dev Mode)', email, role: 'admin' };
+
+            // Try to find persisted admin data (Local Mode)
+            if (!isDbConnected()) {
+                const users = readData('User');
+                const found = users.find(u => u.email === 'admin@edutest.com' || u._id === 'mock-admin');
+                if (found) adminUser = { ...found, id: found._id, role: 'admin' };
+            } else {
+                // Try to find in DB
+                const found = await User.findOne({ email: 'admin@edutest.com' });
+                if (found) adminUser = { ...found._doc, role: 'admin' };
+            }
+
             return res.json({
-                token: jwt.sign({ id: 'mock-admin', role: 'admin' }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' }),
-                user: { id: 'mock-admin', name: 'Boss Admin (Dev Mode)', email, role: 'admin' }
+                token: jwt.sign({ id: adminUser.id || adminUser._id, role: 'admin' }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' }),
+                user: adminUser
             });
         }
 
@@ -155,15 +169,71 @@ exports.assignTask = async (req, res) => {
 // Delete teacher
 exports.deleteTeacher = async (req, res) => {
     try {
-        if (!isDbConnected()) throw new Error('DB Disconnected');
-        await User.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Ustoz bazadan o\'chirildi' });
+        const teacherId = req.params.id;
+
+        if (!isDbConnected()) {
+            const teachers = readData('User');
+            const filteredTeachers = teachers.filter(t => String(t._id) !== String(teacherId));
+            writeData('User', filteredTeachers);
+
+            // Cascade delete locally
+
+            // Delete Students (From Student collection)
+            let students = readData('Student') || [];
+            students = students.filter(s => {
+                const sTeacherId = s.teacherId?._id ? String(s.teacherId._id) : String(s.teacherId);
+                return sTeacherId !== String(teacherId);
+            });
+            writeData('Student', students);
+
+            // Delete Tests
+            let tests = readData('Test') || [];
+            tests = tests.filter(t => {
+                const tTeacherId = t.teacherId?._id ? String(t.teacherId._id) : String(t.teacherId);
+                return tTeacherId !== String(teacherId);
+            });
+            writeData('Test', tests);
+
+            // Delete Groups
+            let groups = readData('Group') || [];
+            groups = groups.filter(g => {
+                const gTeacherId = g.teacherId?._id ? String(g.teacherId._id) : String(g.teacherId);
+                return gTeacherId !== String(teacherId);
+            });
+            writeData('Group', groups);
+
+            // Delete Tasks
+            let tasks = readData('Task') || [];
+            tasks = tasks.filter(t => {
+                const tTeacherId = t.teacher?._id ? String(t.teacher._id) : String(t.teacher);
+                return tTeacherId !== String(teacherId);
+            });
+            writeData('Task', tasks);
+
+            return res.json({ message: 'Ustoz va barcha bog\'liq ma\'lumotlar (Local) o\'chirildi' });
+        }
+
+        // MongoDB Cascade Delete
+        // 1. Delete the Teacher
+        await User.findByIdAndDelete(teacherId);
+
+        // 2. Delete Students associated with this teacher
+        // Note: Students are in Student collection
+        await require('../models/Student').deleteMany({ teacherId: teacherId });
+
+        // 3. Delete Tests
+        await require('../models/Test').deleteMany({ teacherId: teacherId });
+
+        // 4. Delete Groups
+        await require('../models/Group').deleteMany({ teacherId: teacherId });
+
+        // 5. Delete Tasks
+        await require('../models/Task').deleteMany({ teacher: teacherId });
+
+        res.json({ message: 'Ustoz va barcha bog\'liq ma\'lumotlar bazadan o\'chirildi' });
     } catch (err) {
-        // Fallback delete from JSON
-        const teachers = readData('User');
-        const filtered = teachers.filter(t => t._id !== req.params.id);
-        writeData('User', filtered);
-        res.json({ message: 'Ustoz (Local) o\'chirildi' });
+        console.error(err);
+        res.status(500).json({ message: 'O\'chirishda xatolik: ' + err.message });
     }
 };
 
@@ -204,12 +274,25 @@ exports.getProfile = async (req, res) => {
     try {
         // MOCK ADMIN BYPASS
         if (req.user.id === 'mock-admin') {
-            return res.json({
+            let adminData = {
                 _id: 'mock-admin',
                 name: 'Boss Admin (Dev)',
                 email: 'admin@edutest.com',
                 role: 'admin'
-            });
+            };
+
+            // Attempt to find actual persisted admin image
+            if (!isDbConnected()) {
+                const users = readData('User');
+                const found = users.find(u => u.email === 'admin@edutest.com' || u.role === 'admin' || u._id === 'mock-admin');
+                if (found) {
+                    adminData.image = found.image;
+                    adminData.name = found.name;
+                    adminData._id = found._id;
+                }
+            }
+
+            return res.json(adminData);
         }
 
         if (!isDbConnected()) {
@@ -227,10 +310,112 @@ exports.getProfile = async (req, res) => {
     }
 };
 
+
+
+// Update Teacher (Admin)
+exports.updateTeacher = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, email, subject, image } = req.body;
+
+        if (!isDbConnected()) {
+            const users = readData('User');
+            const idx = users.findIndex(u => u._id === id);
+            if (idx !== -1) {
+                if (name) users[idx].name = name;
+                if (email) users[idx].email = email;
+                if (subject) users[idx].subject = subject;
+                if (image) users[idx].image = image;
+                writeData('User', users);
+                return res.json({ message: 'Ustoz (Local) yangilandi', teacher: users[idx] });
+            }
+            return res.status(404).json({ message: 'Ustoz topilmadi' });
+        }
+
+        const teacher = await User.findById(id);
+        if (!teacher) return res.status(404).json({ message: 'Ustoz topilmadi' });
+
+        if (name) teacher.name = name;
+        if (email) teacher.email = email;
+        if (subject) teacher.subject = subject;
+        if (image) teacher.image = image;
+
+        await teacher.save();
+        res.json({ message: 'Ustoz ma\'lumotlari yangilandi', teacher });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Update Profile
 exports.updateProfile = async (req, res) => {
     try {
         const { name, email, password, image } = req.body;
+
+        // MOCK ADMIN BYPASS - WITH PERSISTENCE
+        if (req.user.id === 'mock-admin' || req.user.email === 'admin@edutest.com') {
+            const adminData = {
+                _id: 'mock-admin',
+                name: name || 'Boss Admin (Dev)',
+                email: email || 'admin@edutest.com',
+                role: 'admin',
+                image: image, // Save image
+                subject: 'Admin'
+            };
+
+            if (!isDbConnected()) {
+                const users = readData('User');
+                const idx = users.findIndex(u => u.email === 'admin@edutest.com' || u._id === 'mock-admin');
+                if (idx !== -1) {
+                    if (name) users[idx].name = name;
+                    if (email) users[idx].email = email;
+                    if (image) users[idx].image = image;
+                    users[idx].role = 'admin'; // FORCE ADMIN ROLE
+                    writeData('User', users);
+                    return res.json({ message: 'Admin profili yangilandi', user: users[idx] });
+                } else {
+                    // Create if not exists
+                    users.push(adminData);
+                    writeData('User', users);
+                    return res.json({ message: 'Admin profili yaratildi', user: adminData });
+                }
+            } else {
+                // DB Logic for Admin
+                let user = await User.findOne({ email: 'admin@edutest.com' });
+                if (!user) {
+                    user = new User(adminData);
+                    // Password handling might be needed if creating fresh, but this is a bypass update
+                } else {
+                    if (name) user.name = name;
+                    if (email) user.email = email;
+                    if (image) user.image = image;
+                    user.role = 'admin'; // FORCE ADMIN ROLE
+                }
+                const saved = await user.save();
+                return res.json({ message: 'Admin profili DB da yangilandi', user: saved });
+            }
+        }
+
+        if (!isDbConnected()) {
+            const users = readData('User');
+            const idx = users.findIndex(u => u._id === req.user.id);
+            if (idx !== -1) {
+                if (name) users[idx].name = name;
+                if (email) users[idx].email = email;
+                if (image) users[idx].image = image;
+
+                if (password) {
+                    const salt = await bcrypt.genSalt(10);
+                    users[idx].password = await bcrypt.hash(password, salt);
+                    users[idx].plainPassword = password;
+                }
+
+                writeData('User', users);
+                return res.json({ message: 'Profil (Local) yangilandi', user: { id: users[idx]._id, name: users[idx].name, email: users[idx].email, role: users[idx].role, image: users[idx].image, subject: users[idx].subject } });
+            }
+            return res.status(404).json({ message: 'User topilmadi (Local Mode)' });
+        }
+
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User topilmadi' });
 
@@ -248,5 +433,25 @@ exports.updateProfile = async (req, res) => {
         res.json({ message: 'Profil muvaffaqiyatli yangilandi', user: { id: user._id, name: user.name, email: user.email, role: user.role, image: user.image, subject: user.subject } });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getAdminInfo = async (req, res) => {
+    try {
+        let adminUser = { name: 'Admin', email: 'admin@edutest.com' };
+
+        if (!isDbConnected()) {
+            const users = readData('User');
+            // Try to find by role 'admin' OR specific email
+            const found = users.find(u => u.role === 'admin' || u.email === 'admin@edutest.com' || u._id === 'mock-admin');
+            if (found) adminUser = { name: found.name, email: found.email, image: found.image };
+        } else {
+            const found = await User.findOne({ email: 'admin@edutest.com' });
+            if (found) adminUser = { name: found.name, email: found.email, image: found.image };
+        }
+
+        res.json(adminUser);
+    } catch (err) {
+        res.status(500).json({ message: 'Admin info error' });
     }
 };

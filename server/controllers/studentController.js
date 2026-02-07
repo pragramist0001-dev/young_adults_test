@@ -34,6 +34,7 @@ exports.createStudent = async (req, res) => {
                 loginId,
                 chosenSubject,
                 groupId: groupId || null,
+                teacherId: req.user.id,
                 status: 'pending',
                 score: 0,
                 createdAt: new Date().toISOString()
@@ -66,6 +67,44 @@ exports.startTest = async (req, res) => {
         const student = students.find(s => s.loginId === loginId);
         if (!student) return res.status(404).json({ message: 'ID topilmadi' });
 
+        // Check weekly access restriction
+        if (student.lastAccessDate) {
+            const lastAccess = new Date(student.lastAccessDate);
+            const now = new Date();
+            const daysSinceLastAccess = (now - lastAccess) / (1000 * 60 * 60 * 24);
+
+            if (daysSinceLastAccess < 7) {
+                // Check if student has valid early access approval (teacher approval only)
+                const hasValidApproval = student.earlyAccessRequest?.teacherApproved;
+
+                if (hasValidApproval) {
+                    // Allow access - approval granted by teacher
+                    // Note: approval will be reset when student completes the test and lastAccessDate is updated
+                } else {
+                    // Check if student has already requested early access
+                    if (student.earlyAccessRequest?.requested) {
+                        return res.status(403).json({
+                            message: 'Ustoz ruxsatini kutmoqda. Ustoz tasdiqlashi bilan testga kirishingiz mumkin.',
+                            canRequestEarlyAccess: false,
+                            earlyAccessRequest: student.earlyAccessRequest
+                        });
+                    }
+
+                    const nextAccessDate = new Date(lastAccess);
+                    nextAccessDate.setDate(nextAccessDate.getDate() + 7);
+                    const daysRemaining = Math.ceil(7 - daysSinceLastAccess);
+
+                    return res.status(403).json({
+                        message: `Test topshirish uchun 7 kunlik cheklov mavjud. Qayta kirish uchun ustozdan ruxsat so'rang.`,
+                        nextAccessDate: nextAccessDate.toISOString(),
+                        daysRemaining,
+                        canRequestEarlyAccess: true,
+                        earlyAccessRequest: student.earlyAccessRequest || null
+                    });
+                }
+            }
+        }
+
         const groups = readData('Group') || [];
         const group = groups.find(g => g._id === student.groupId);
         const tests = readData('Test') || [];
@@ -73,10 +112,13 @@ exports.startTest = async (req, res) => {
 
         if (student.status === 'checked') {
             const currentTestId = assignedTest?._id;
-            if (currentTestId && student.testId === currentTestId) {
+            const hasEarlyAccessApproval = student.earlyAccessRequest?.teacherApproved;
+
+            // Only block if same test AND no early access approval
+            if (currentTestId && student.testId === currentTestId && !hasEarlyAccessApproval) {
                 return res.status(400).json({ message: 'Siz ushbu testni allaqachon topshirgansiz' });
             }
-            // If it's a different test, we allow them to enter (it will overwrite their old score)
+            // If early access approved or different test, allow them to enter (will overwrite old score)
         }
 
         let questions = [];
@@ -105,14 +147,53 @@ exports.startTest = async (req, res) => {
 
         if (!student) return res.status(404).json({ message: 'ID topilmadi' });
 
+        // Check weekly access restriction
+        if (student.lastAccessDate) {
+            const lastAccess = new Date(student.lastAccessDate);
+            const now = new Date();
+            const daysSinceLastAccess = (now - lastAccess) / (1000 * 60 * 60 * 24);
+
+            if (daysSinceLastAccess < 7) {
+                // Check if student has valid early access approval
+                const hasValidApproval = student.earlyAccessRequest?.teacherApproved;
+
+                if (hasValidApproval) {
+                    // Allow access - continue to test
+                } else {
+                    // Check if student has already requested early access
+                    if (student.earlyAccessRequest?.requested) {
+                        return res.status(403).json({
+                            message: 'Ustoz ruxsatini kutmoqda. Ustoz tasdiqlashi bilan testga kirishingiz mumkin.',
+                            canRequestEarlyAccess: false,
+                            earlyAccessRequest: student.earlyAccessRequest
+                        });
+                    }
+
+                    const nextAccessDate = new Date(lastAccess);
+                    nextAccessDate.setDate(nextAccessDate.getDate() + 7);
+                    const daysRemaining = Math.ceil(7 - daysSinceLastAccess);
+
+                    return res.status(403).json({
+                        message: `Test topshirish uchun 7 kunlik cheklov mavjud. Qayta kirish uchun ustozdan ruxsat so'rang.`,
+                        nextAccessDate: nextAccessDate.toISOString(),
+                        daysRemaining,
+                        canRequestEarlyAccess: true,
+                        earlyAccessRequest: student.earlyAccessRequest || null
+                    });
+                }
+            }
+        }
+
         if (student.status === 'checked') {
             const currentTestId = student.groupId?.assignedTest?._id?.toString();
             const finishedTestId = student.testId?.toString();
+            const hasEarlyAccessApproval = student.earlyAccessRequest?.teacherApproved;
 
-            if (currentTestId && finishedTestId === currentTestId) {
+            // Only block if same test AND no early access approval
+            if (currentTestId && finishedTestId === currentTestId && !hasEarlyAccessApproval) {
                 return res.status(400).json({ message: 'Siz allaqachon ushbu testni topshirgansiz' });
             }
-            // Allow if a different test is now assigned
+            // If early access approved or different test, allow them to enter (will overwrite old score)
         }
 
         let questions = [];
@@ -174,6 +255,16 @@ exports.submitTest = async (req, res) => {
         student.answers = processedAnswers;
         student.status = 'checked';
         student.testId = req.body.testId || null;
+        student.lastAccessDate = new Date(); // Set last access date for weekly restriction
+
+        // Reset early access request so student needs new approval for next time
+        student.earlyAccessRequest = {
+            requested: false,
+            teacherApproved: false,
+            adminApproved: false,
+            approved: false
+        };
+
         await student.save();
 
         // Add student to Test participants if test access code is known or inferred
@@ -223,6 +314,15 @@ exports.submitTest = async (req, res) => {
                 students[studentIdx].timeSpent = req.body.timeSpent || "00:00";
                 students[studentIdx].answers = processedAnswers;
                 students[studentIdx].testId = req.body.testId || null;
+                students[studentIdx].lastAccessDate = new Date().toISOString(); // Set last access date for weekly restriction
+
+                // Reset early access request so student needs new approval for next time
+                students[studentIdx].earlyAccessRequest = {
+                    requested: false,
+                    teacherApproved: false,
+                    adminApproved: false,
+                    approved: false
+                };
 
                 writeData('Student', students);
                 return res.json({ message: 'Natija (Local Mode) saqlandi', score });
@@ -240,8 +340,11 @@ exports.getStudentsBySubject = async (req, res) => {
             const groups = readData('Group') || [];
             const questions = readData('Question') || [];
 
+            const users = readData('User') || [];
+
             const filtered = students.filter(s => s.chosenSubject === subject).map(s => {
                 const group = groups.find(g => g._id === s.groupId);
+                const teacher = users.find(u => u._id === s.teacherId);
                 // Manually populate answers
                 const populatedAnswers = (s.answers || []).map(ans => {
                     const qObj = questions.find(q => q._id === ans.questionId);
@@ -251,6 +354,7 @@ exports.getStudentsBySubject = async (req, res) => {
                 return {
                     ...s,
                     groupId: group ? { name: group.name } : null,
+                    teacherId: teacher ? { name: teacher.name } : null,
                     answers: populatedAnswers
                 };
             }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -259,6 +363,7 @@ exports.getStudentsBySubject = async (req, res) => {
         const students = await Student.find({ chosenSubject: subject })
             .populate('groupId', 'name')
             .populate('testId', 'topic')
+            .populate('teacherId', 'name')
             .populate('answers.questionId')
             .sort({ createdAt: -1 });
         res.json(students);
@@ -292,19 +397,28 @@ exports.getAllStudents = async (req, res) => {
             const groups = readData('Group') || [];
             const questions = readData('Question') || [];
 
+            const users = readData('User') || [];
+
             const populatedStudents = students.map(s => {
                 const group = groups.find(g => g._id === s.groupId);
+                const teacher = users.find(u => u._id === s.teacherId);
                 const populatedAnswers = (s.answers || []).map(ans => {
                     const qObj = questions.find(q => q._id === ans.questionId);
                     return { ...ans, questionId: qObj || null };
                 });
-                return { ...s, groupId: group ? { name: group.name } : null, answers: populatedAnswers };
+                return {
+                    ...s,
+                    groupId: group ? { _id: group._id, name: group.name } : null,
+                    teacherId: teacher ? { _id: teacher._id, name: teacher.name } : null,
+                    answers: populatedAnswers
+                };
             });
             return res.json(populatedStudents);
         }
         const students = await Student.find()
             .populate('groupId', 'name')
             .populate('testId', 'topic')
+            .populate('teacherId', 'name')
             .populate('answers.questionId')
             .sort({ createdAt: -1 });
         res.json(students);
@@ -320,14 +434,357 @@ exports.getStudentsByGroup = async (req, res) => {
 
         if (!isDbConnected()) {
             const students = readData('Student') || [];
-            const groupStudents = students.filter(s => s.groupId === groupId);
+            const users = readData('User') || [];
+            const groups = readData('Group') || []; // Added groups for groupId population
+            const questions = readData('Question') || []; // Added questions for answers population
+
+            const groupStudents = students.filter(s => s.groupId === groupId).map(s => {
+                const group = groups.find(g => g._id === s.groupId); // Find group for _id
+                const teacher = users.find(u => u._id === s.teacherId);
+                const populatedAnswers = (s.answers || []).map(ans => {
+                    const qObj = questions.find(q => q._id === ans.questionId);
+                    return { ...ans, questionId: qObj || null };
+                });
+                return {
+                    ...s,
+                    groupId: group ? { _id: group._id, name: group.name } : null, // Populate with _id
+                    teacherId: teacher ? { _id: teacher._id, name: teacher.name } : null, // Populate with _id
+                    answers: populatedAnswers
+                };
+            });
             return res.json(groupStudents);
         }
 
         const students = await Student.find({ groupId })
             .populate('testId', 'topic')
+            .populate('teacherId', 'name')
             .populate('answers.questionId')
             .sort({ createdAt: -1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+// Get students by Teacher ID (My Students)
+exports.getMyStudents = async (req, res) => {
+    try {
+        if (!isDbConnected()) {
+            const students = readData('Student') || [];
+            const groups = readData('Group') || [];
+            const questions = readData('Question') || [];
+            const users = readData('User') || [];
+
+            // Find groups belonging to this teacher
+            const myGroupIds = groups.filter(g => g.teacherId === req.user.id).map(g => g._id);
+
+            const myStudents = students.filter(s =>
+                s.teacherId === req.user.id || (s.groupId && myGroupIds.includes(s.groupId))
+            ).map(s => {
+                const group = groups.find(g => g._id === s.groupId);
+                const teacher = users.find(u => u._id === s.teacherId);
+                const populatedAnswers = (s.answers || []).map(ans => {
+                    const qObj = questions.find(q => q._id === ans.questionId);
+                    return { ...ans, questionId: qObj || null };
+                });
+                return {
+                    ...s,
+                    groupId: group ? { _id: group._id, name: group.name } : null,
+                    teacherId: teacher ? { _id: teacher._id, name: teacher.name } : null,
+                    answers: populatedAnswers
+                };
+            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return res.json(myStudents);
+        }
+
+        // MongoDB Logic
+        const myGroups = await Group.find({ teacherId: req.user.id }).select('_id');
+        const myGroupIds = myGroups.map(g => g._id);
+
+        const students = await Student.find({
+            $or: [
+                { teacherId: req.user.id },
+                { groupId: { $in: myGroupIds } }
+            ]
+        })
+            .populate('groupId', 'name')
+            .populate('testId', 'topic')
+            .populate('teacherId', 'name')
+            .populate('answers.questionId')
+            .sort({ createdAt: -1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+// Request early access (Student)
+exports.requestEarlyAccess = async (req, res) => {
+    try {
+        const { loginId } = req.body;
+
+        if (!isDbConnected()) {
+            const students = readData('Student');
+            const studentIdx = students.findIndex(s => s.loginId === loginId);
+
+            if (studentIdx === -1) {
+                return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+            }
+
+            // Reset approval request
+            students[studentIdx].earlyAccessRequest = {
+                requested: true,
+                requestedAt: new Date().toISOString(),
+                teacherApproved: false,
+                adminApproved: false,
+                approved: false,
+                used: false
+            };
+
+            writeData('Student', students);
+            return res.json({ message: 'So\'rov yuborildi. Ustoz tasdig\'ini kuting.' });
+        }
+
+        const student = await Student.findOne({ loginId });
+        if (!student) {
+            return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+        }
+
+        // Reset and create new approval request
+        student.earlyAccessRequest = {
+            requested: true,
+            requestedAt: new Date(),
+            teacherApproved: false,
+            adminApproved: false,
+            approved: false,
+            used: false
+        };
+
+        await student.save();
+        res.json({ message: 'So\'rov yuborildi. Ustoz tasdig\'ini kuting.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get pending approval requests for teacher
+exports.getPendingApprovals = async (req, res) => {
+    try {
+        if (!isDbConnected()) {
+            const students = readData('Student') || [];
+            const groups = readData('Group') || [];
+            const myGroupIds = groups.filter(g => g.teacherId === req.user.id).map(g => g._id);
+
+            const pending = students.filter(s =>
+                s.earlyAccessRequest?.requested &&
+                !s.earlyAccessRequest?.approved &&
+                (s.teacherId === req.user.id || (s.groupId && myGroupIds.includes(s.groupId)))
+            ).map(s => {
+                const group = groups.find(g => g._id === s.groupId);
+                return {
+                    ...s,
+                    groupId: group ? { _id: group._id, name: group.name } : null
+                };
+            });
+
+            return res.json(pending);
+        }
+
+        const myGroups = await Group.find({ teacherId: req.user.id }).select('_id');
+        const myGroupIds = myGroups.map(g => g._id);
+
+        const students = await Student.find({
+            'earlyAccessRequest.requested': true,
+            'earlyAccessRequest.approved': false,
+            $or: [
+                { teacherId: req.user.id },
+                { groupId: { $in: myGroupIds } }
+            ]
+        })
+            .populate('groupId', 'name')
+            .populate('teacherId', 'name')
+            .sort({ 'earlyAccessRequest.requestedAt': -1 });
+
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Teacher approves/rejects early access
+exports.teacherApproveEarlyAccess = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { approved } = req.body;
+
+        if (!isDbConnected()) {
+            const students = readData('Student');
+            const studentIdx = students.findIndex(s => s._id === studentId);
+
+            if (studentIdx === -1) {
+                return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+            }
+
+            if (!students[studentIdx].earlyAccessRequest) {
+                students[studentIdx].earlyAccessRequest = {};
+            }
+
+            students[studentIdx].earlyAccessRequest.teacherApproved = approved;
+            students[studentIdx].earlyAccessRequest.teacherApprovedAt = new Date().toISOString();
+            students[studentIdx].earlyAccessRequest.teacherApprovedBy = req.user.id;
+            students[studentIdx].earlyAccessRequest.approved = approved; // Teacher approval is sufficient
+
+            writeData('Student', students);
+            return res.json({ message: approved ? 'Tasdiqlandi' : 'Rad etildi', student: students[studentIdx] });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+        }
+
+        if (!student.earlyAccessRequest) {
+            student.earlyAccessRequest = {};
+        }
+
+        student.earlyAccessRequest.teacherApproved = approved;
+        student.earlyAccessRequest.teacherApprovedAt = new Date();
+        student.earlyAccessRequest.teacherApprovedBy = req.user.id;
+        student.earlyAccessRequest.approved = approved; // Teacher approval is sufficient
+
+        await student.save();
+        res.json({ message: approved ? 'Tasdiqlandi' : 'Rad etildi', student });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Admin approves/rejects early access
+exports.adminApproveEarlyAccess = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { approved } = req.body;
+
+        if (!isDbConnected()) {
+            const students = readData('Student');
+            const studentIdx = students.findIndex(s => s._id === studentId);
+
+            if (studentIdx === -1) {
+                return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+            }
+
+            if (!students[studentIdx].earlyAccessRequest) {
+                students[studentIdx].earlyAccessRequest = {};
+            }
+
+            students[studentIdx].earlyAccessRequest.adminApproved = approved;
+            students[studentIdx].earlyAccessRequest.adminApprovedAt = new Date().toISOString();
+            students[studentIdx].earlyAccessRequest.adminApprovedBy = req.user.id;
+
+            if (approved && students[studentIdx].earlyAccessRequest.teacherApproved) {
+                students[studentIdx].earlyAccessRequest.approved = true;
+            } else {
+                students[studentIdx].earlyAccessRequest.approved = false;
+            }
+
+            writeData('Student', students);
+            return res.json({ message: approved ? 'Tasdiqlandi' : 'Rad etildi', student: students[studentIdx] });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+        }
+
+        if (!student.earlyAccessRequest) {
+            student.earlyAccessRequest = {};
+        }
+
+        student.earlyAccessRequest.adminApproved = approved;
+        student.earlyAccessRequest.adminApprovedAt = new Date();
+        student.earlyAccessRequest.adminApprovedBy = req.user.id;
+
+        if (approved && student.earlyAccessRequest.teacherApproved) {
+            student.earlyAccessRequest.approved = true;
+        } else {
+            student.earlyAccessRequest.approved = false;
+        }
+
+        await student.save();
+        res.json({ message: approved ? 'Tasdiqlandi' : 'Rad etildi', student });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get pending approvals for teacher's students
+exports.getPendingApprovals = async (req, res) => {
+    try {
+        const teacherId = req.user.id;
+
+        if (!isDbConnected()) {
+            const students = readData('Student') || [];
+            const groups = readData('Group') || [];
+
+            const pending = students.filter(s =>
+                s.teacherId === teacherId &&
+                s.earlyAccessRequest?.requested &&
+                !s.earlyAccessRequest?.teacherApproved
+            ).map(s => {
+                const group = groups.find(g => g._id === s.groupId);
+                return {
+                    ...s,
+                    groupId: group || null
+                };
+            });
+
+            return res.json(pending);
+        }
+
+        const students = await Student.find({
+            teacherId: teacherId,
+            'earlyAccessRequest.requested': true,
+            'earlyAccessRequest.teacherApproved': { $ne: true }
+        })
+            .populate('groupId', 'name')
+            .sort({ 'earlyAccessRequest.requestedAt': -1 });
+
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get all pending approvals (Admin view)
+exports.getAllPendingApprovals = async (req, res) => {
+    try {
+        if (!isDbConnected()) {
+            const students = readData('Student') || [];
+            const groups = readData('Group') || [];
+            const users = readData('User') || [];
+
+            const pending = students.filter(s =>
+                s.earlyAccessRequest?.requested &&
+                !s.earlyAccessRequest?.approved
+            ).map(s => {
+                const group = groups.find(g => g._id === s.groupId);
+                const teacher = users.find(u => u._id === s.teacherId);
+                return {
+                    ...s,
+                    groupId: group ? { _id: group._id, name: group.name } : null,
+                    teacherId: teacher ? { _id: teacher._id, name: teacher.name } : null
+                };
+            });
+
+            return res.json(pending);
+        }
+
+        const students = await Student.find({
+            'earlyAccessRequest.requested': true,
+            'earlyAccessRequest.approved': false
+        })
+            .populate('groupId', 'name')
+            .populate('teacherId', 'name')
+            .sort({ 'earlyAccessRequest.requestedAt': -1 });
+
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: err.message });
