@@ -1,16 +1,66 @@
-# React + Vite
+Loyihani Deploy Qilish Qo'llanmasi (Render.com)
+Netlify asosan frontend (static saytlar) uchun mo'ljallangan. Sizning loyihangiz MERN stack (MongoDB, Express, React, Node.js) bo'lgani uchun, backend server ham ishlashi kerak.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Eng yaxshi va bepul variant: Render.com. Bu platformada Frontend va Backend alohida, lekin juda oson bog'lanadi.
 
-Currently, two official plugins are available:
+⚠️ Muhim Eslatma (Ma'lumotlar Bazasi)
+Sizning loyihangizda 
+students.json
+ fayli bor. Deploy qilinganda fayllar o'zgarishi saqlanmaydi! Server har safar qayta ishga tushganda (restart), 
+students.json
+ fayli asl holatiga qaytadi. Shuning uchun, MongoDB Atlas (Cloud Database) ishlatish shart. Lokal mongodb://localhost... internetda ishlamaydi.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1-qadam: MongoDB Atlas (Agar yo'q bo'lsa)
+MongoDB Atlas saytidan ro'yxatdan o'ting.
+Bepul klaster (Shared Cluster) yarating.
+"Database Access" bo'limida yangi user va parol yarating.
+"Network Access" bo'limida "Allow Access from Anywhere (0.0.0.0/0)" ni tanlang.
+"Connect" tugmasini bosib, ulanish linkini oling (masalan: mongodb+srv://user:password@cluster.mongodb.net/...).
+2-qadam: Backend (Server) Deploy
+Render.com saytidan ro'yxatdan o'ting (GitHub orqali).
 
-## React Compiler
+"New +" tugmasini bosib, "Web Service" ni tanlang.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+GitHub repozitoriyingizni ulang.
 
-## Expanding the ESLint configuration
+Quyidagi sozlamalarni kiriting:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Name: markaz-backend (yoki xohlagan nom)
+Root Directory: server (juda muhim!)
+Environment: Node
+Build Command: npm install
+Start Command: node index.js
+Plan: Free
+Environment Variables bo'limiga o'ting va qo'shing:
+
+MONGO_URI: (MongoDB Atlas ulanish linki)
+JWT_SECRET: (xohlagan maxfiy so'z)
+PORT: 10000 (yoki avtomatik 10000 bo'ladi)
+"Create Web Service" tugmasini bosing.
+
+Deploy tugagach, yuqorida backend URL paydo bo'ladi (masalan: https://markaz-backend.onrender.com). Buni nusxalab oling.
+
+3-qadam: Frontend (Client) Deploy
+Render.com da "New +" -> "Static Site" ni tanlang.
+
+Xuddi shu GitHub repozitoriyini tanlang.
+
+Sozlamalar:
+
+Name: markaz-frontend
+Root Directory: client (juda muhim!)
+Build Command: npm install && npm run build (yoki npm run build)
+Publish Directory: dist
+Environment Variables bo'limiga o'ting:
+
+VITE_API_URL: (2-qadamda olgan Backend URLingiz, oxirida /api qo'shing. Masalan: https://markaz-backend.onrender.com/api)
+"Create Static Site" tugmasini bosing.
+
+🎉 Natija
+Deploy tugagach, Frontend URL orqali saytga kirishingiz mumkin.
+
+Frontend so'rovlarni avtomatik ravishda Render dagi Backend ga yuboradi.
+Ma'lumotlar MongoDB Atlas da xavfsiz saqlanadi.
+Muammolar chiqsa:
+Render da "Logs" bo'limini tekshiring.
+MongoDB IP address ruxsati (Network Access) ochiqligini tekshiring.
