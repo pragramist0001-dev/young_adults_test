@@ -25,11 +25,11 @@ const Home = () => {
         setRequestingAccess(true);
         try {
             const res = await axios.post(`${API_URL}/students/request-early-access`, { loginId });
-            toast.success(res.data.message);
+            toast.success(t.request_sent_success);
             // Refresh the block info to show updated approval status
             handleSubmit({ preventDefault: () => { } });
         } catch (err) {
-            const msg = err.response?.data?.message || 'Xatolik yuz berdi';
+            const msg = err.response?.data?.message || t.error_occurred;
             toast.error(msg);
         } finally {
             setRequestingAccess(false);
@@ -40,7 +40,7 @@ const Home = () => {
         e.preventDefault();
         setLoading(true);
         setBlocked(false);
-        const loadToast = toast.loading('Test tayyorlanmoqda...');
+        const loadToast = toast.loading(t.preparing_test);
         try {
             const res = await axios.post(`${API_URL}/students/start`, { loginId });
             const { studentId, chosenSubject, fullName, questions, testId } = res.data;
@@ -48,7 +48,7 @@ const Home = () => {
             let finalQuestions = questions;
 
             if (!finalQuestions || finalQuestions.length === 0) {
-                toast.error('Guruhga hali test biriktirilmagan. Ustozingiz bilan bog\'laning.', { id: loadToast });
+                toast.error(t.no_test_assigned_error, { id: loadToast });
                 setLoading(false);
                 return;
             }
@@ -89,7 +89,7 @@ const Home = () => {
                             >
                                 <img src="/logo.jpg" alt="Logo" className="w-24 h-24 object-contain transition-transform group-hover:rotate-3" />
                             </div>
-                            <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-[0.3em] ml-0.5">{language === 'uz' ? "O'QUV MARKAZI TIZIMI" : language === 'ru' ? "СИСТЕМА УЧЕБНОГО ЦЕНТРА" : "EDUCATION CENTER SYSTEM"}</p>
+                            <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-[0.3em] ml-0.5">{t.system_title}</p>
                         </div>
                         <button
                             onClick={() => navigate('/login')}
@@ -147,12 +147,14 @@ const Home = () => {
                                         </svg>
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-amber-900 dark:text-amber-100 mb-2">Kirish cheklangan</h3>
-                                        <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">{blockInfo.message}</p>
+                                        <h3 className="font-bold text-amber-900 dark:text-amber-100 mb-2">{t.access_restricted}</h3>
+                                        <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                                            {blockInfo.earlyAccessRequest?.requested ? t.waiting_for_teacher : t.restriction_message}
+                                        </p>
 
                                         {blockInfo.earlyAccessRequest?.requested ? (
                                             <div className="space-y-3">
-                                                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Ruxsat holati:</p>
+                                                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">{t.approval_status}:</p>
                                                 <div className="p-4 rounded-2xl border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
@@ -166,11 +168,11 @@ const Home = () => {
                                                                 </svg>
                                                             )}
                                                             <span className={`text-sm font-bold ${blockInfo.earlyAccessRequest.teacherApproved ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                                                                Ustoz
+                                                                {t.teacher}
                                                             </span>
                                                         </div>
                                                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${blockInfo.earlyAccessRequest.teacherApproved ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>
-                                                            {blockInfo.earlyAccessRequest.teacherApproved ? 'Tasdiqlandi' : 'Kutilmoqda'}
+                                                            {blockInfo.earlyAccessRequest.teacherApproved ? t.approved : t.waiting}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -179,10 +181,10 @@ const Home = () => {
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                                         </svg>
-                                                        ✓ Ruxsat berildi! Qayta urinib ko'ring.
+                                                        {t.access_granted}
                                                     </p>
                                                 ) : (
-                                                    <p className="text-xs text-amber-700 dark:text-amber-300">Ustoz ruxsatini kutmoqda...</p>
+                                                    <p className="text-xs text-amber-700 dark:text-amber-300">{t.waiting_for_teacher}</p>
                                                 )}
                                             </div>
                                         ) : (
@@ -191,7 +193,7 @@ const Home = () => {
                                                 disabled={requestingAccess}
                                                 className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-sm transition-all disabled:opacity-50"
                                             >
-                                                {requestingAccess ? 'Yuborilmoqda...' : 'Ustozdan ruxsat oling'}
+                                                {requestingAccess ? t.sending : t.ask_permission}
                                             </button>
                                         )}
                                     </div>

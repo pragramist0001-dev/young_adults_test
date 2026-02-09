@@ -52,7 +52,7 @@ const TestPage = () => {
             dispatch(setScore(res.data.score));
             dispatch(finishTest());
         } catch (err) {
-            toast.error(language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred');
+            toast.error(t.error_occurred);
         } finally {
             setSubmitting(false);
         }
@@ -65,7 +65,7 @@ const TestPage = () => {
                     <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
                         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <h1 className="mb-4 text-3xl font-black text-[var(--text-main)] uppercase tracking-tighter">Test Yakunlandi!</h1>
+                    <h1 className="mb-4 text-3xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.test_finished}</h1>
                     <p className="text-lg text-[var(--text-muted)] font-medium mb-8">{t.results}:</p>
                     <div className="mb-10 inline-block px-10 py-6 bg-blue-500/10 text-blue-500 rounded-[32px] text-6xl font-black border border-blue-500/20">
                         {score} / {questions.length}
@@ -133,7 +133,7 @@ const TestPage = () => {
                                     disabled={submitting || selectedIndex === null}
                                     className="px-10 py-4 text-white bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
                                 >
-                                    {submitting ? '...' : t.finish_confirm.split('?')[0].trim()}
+                                    {submitting ? '...' : t.finish_action}
                                 </button>
                             ) : (
                                 <button

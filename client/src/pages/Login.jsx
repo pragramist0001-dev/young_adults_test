@@ -22,11 +22,11 @@ const Login = () => {
 
     useEffect(() => {
         if (isError) {
-            toast.error(message || 'Login muvaffaqiyatsiz tugadi');
+            toast.error(message || t.login_error);
         }
         if (isSuccess || token) {
             if (token) {
-                toast.success('Xush kelibsiz!');
+                toast.success(t.welcome);
                 if (user?.role === 'admin') navigate('/admin');
                 else navigate('/teacher');
             }
@@ -36,7 +36,7 @@ const Login = () => {
     const onSubmit = (e) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
-            return toast.error('Email va parolni kiriting');
+            return toast.error(t.enter_credentials);
         }
         dispatch(login(formData));
     };
@@ -110,7 +110,7 @@ const Login = () => {
                         onClick={() => navigate('/')}
                         className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-[var(--text-main)]"
                     >
-                        {language === 'uz' ? 'Bosh sahifa' : 'Home'}
+                        {t.home}
                     </button>
                 </div>
             </div>

@@ -534,7 +534,7 @@ const AdminDashboard = () => {
                         >
                             <img src="/logo.jpg" alt="Logo" className="w-16 h-16 object-contain" />
                         </div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Command Center</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{t.command_center}</p>
                     </div>
                 </div>
 
@@ -551,20 +551,20 @@ const AdminDashboard = () => {
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${activeTab === 'teachers' ? 'bg-white text-[#38BDF8]' : 'bg-slate-700 text-slate-300'}`}>{teachers.length}</span>
                     </button>
                     <button onClick={() => { setActiveTab('topics'); setSelectedDept(null) }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'topics' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
-                        <BookOpen size={18} /><span className="font-bold text-sm">{t.test_topics || 'Testlar'}</span>
+                        <BookOpen size={18} /><span className="font-bold text-sm">{t.test_topics}</span>
                     </button>
                     <button onClick={() => { setActiveTab('groups'); setSelectedDept(null) }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'groups' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
                         <Users size={18} /><span className="font-bold text-sm">{t.groups}</span>
                     </button>
                     <button onClick={() => { setActiveTab('students'); setSelectedDept(null) }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'students' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
-                        <CheckCircle2 size={18} /><span className="font-bold text-sm">{t.active_students || 'O\'quvchilar'}</span>
+                        <CheckCircle2 size={18} /><span className="font-bold text-sm">{t.active_students}</span>
                     </button>
                     <button onClick={() => { setActiveTab('results'); setSelectedDept(null) }} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'results' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
                         <div className="flex items-center gap-3"><FileText size={18} /><span className="font-bold text-sm">{t.results}</span></div>
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-700 text-slate-300`}>{students.length}</span>
                     </button>
                     <button onClick={() => { setActiveTab('tasks'); setSelectedDept(null); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'tasks' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
-                        <div className="flex items-center gap-3"><MessageSquare size={18} /><span className="font-bold text-sm">Vazifalar & Chat</span></div>
+                        <div className="flex items-center gap-3"><MessageSquare size={18} /><span className="font-bold text-sm">{t.tasks} & {t.conversations_title}</span></div>
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${activeTab === 'tasks' ? 'bg-white text-[#38BDF8]' : 'bg-slate-700 text-slate-300'}`}>{tasks.filter(t => t.status === 'pending').length}</span>
                     </button>
                     <button onClick={() => { setActiveTab('settings'); setSelectedDept(null) }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-[#38BDF8] shadow-lg shadow-[#38BDF8]/20' : 'text-slate-400 hover:bg-slate-800'}`}>
@@ -587,18 +587,18 @@ const AdminDashboard = () => {
                         <div>
                             <h2 className="text-xl lg:text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">
                                 {activeTab === 'overview' && t.overview}
-                                {activeTab === 'departments' && (selectedDept ? `${selectedDept} Analitikasi` : t.departments)}
+                                {activeTab === 'departments' && (selectedDept ? `${selectedDept} ${t.dept_analytics.split(' ')[1] || 'Analitikasi'}` : t.departments)}
                                 {activeTab === 'teachers' && t.teachers}
-                                {activeTab === 'topics' && (t.test_topics || 'Test Mavzulari')}
+                                {activeTab === 'topics' && t.test_topics}
                                 {activeTab === 'groups' && t.groups}
-                                {activeTab === 'students' && (t.active_students || 'O\'quvchilar')}
+                                {activeTab === 'students' && t.active_students}
                                 {activeTab === 'results' && t.results}
                                 {activeTab === 'settings' && t.settings}
                                 {activeTab === 'profile' && t.cabinet}
                             </h2>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">Live System Analytics</p>
+                                <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">{t.live_system_analytics}</p>
                             </div>
                         </div>
                     </div>
@@ -608,7 +608,7 @@ const AdminDashboard = () => {
                         <div className="bg-[var(--bg-main)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-main)] mr-2">
                             {['week', 'month', 'all'].map(period => (
                                 <button key={period} onClick={() => setTimeFilter(period)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${timeFilter === period ? 'bg-[var(--bg-card)] text-[#38BDF8] shadow-md' : 'text-slate-400'}`}>
-                                    {period === 'week' ? 'Hafta' : period === 'month' ? 'Oy' : 'Jami'}
+                                    {period === 'week' ? t.week : period === 'month' ? t.month : t.all_time}
                                 </button>
                             ))}
                         </div>
@@ -627,7 +627,7 @@ const AdminDashboard = () => {
                                 )}
                             </div>
                             <div className="hidden sm:block text-left">
-                                <p className="text-[10px] font-black text-[var(--text-main)] leading-none uppercase tracking-widest">Admin</p>
+                                <p className="text-[10px] font-black text-[var(--text-main)] leading-none uppercase tracking-widest">{t.admin_role || 'Admin'}</p>
                             </div>
                         </div>
 
@@ -647,7 +647,7 @@ const AdminDashboard = () => {
                                 { label: t.qualityRate, value: `${stats.qualityRate}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50', aos: 'fade-up', delay: 100 },
                                 { label: t.avgScore, value: stats.avgGlobalScore, icon: Award, color: 'text-amber-500', bg: 'bg-amber-50', aos: 'fade-up', delay: 200 },
                                 { label: t.teachers, value: stats.fTeachers.length, icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-50', aos: 'fade-up', delay: 300 },
-                                { label: 'Top Ustoz', value: stats.mostActiveTeacher?.name?.split(' ')[0] || '---', icon: Star, color: 'text-purple-500', bg: 'bg-purple-50', aos: 'fade-up', delay: 400 }
+                                { label: t.top_teacher, value: stats.mostActiveTeacher?.name?.split(' ')[0] || '---', icon: Star, color: 'text-purple-500', bg: 'bg-purple-50', aos: 'fade-up', delay: 400 }
                             ].map((card, idx) => (
                                 <div key={idx} data-aos={card.aos} data-aos-delay={card.delay} className="bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--border-main)] shadow-sm hover:shadow-xl transition-all group">
                                     <div className={`p-4 ${card.bg} ${card.color} rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform`}><card.icon size={24} /></div>
@@ -663,15 +663,15 @@ const AdminDashboard = () => {
                                 {/* Charts Area */}
                                 <div className="bg-[var(--bg-card)] p-12 rounded-[56px] border border-[var(--border-main)] shadow-sm relative overflow-hidden group transition-colors" data-aos="fade-right">
                                     <div className="flex justify-between items-center mb-12">
-                                        <h4 className="text-lg font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><BarChart3 className="text-[#38BDF8]" /> {t.departments} Analitikasi</h4>
+                                        <h4 className="text-lg font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><BarChart3 className="text-[#38BDF8]" /> {t.dept_analytics}</h4>
                                         <TrendingUp size={20} className="text-emerald-400" />
                                     </div>
                                     <div className="h-80 flex items-end gap-8 border-b border-[var(--border-main)] pb-6 relative z-10">
                                         {stats.dStats.map((d, i) => (
                                             <div key={i} className="flex-1 group/bar relative flex flex-col items-center h-full justify-end cursor-pointer" onClick={() => { setActiveTab('departments'); setSelectedDept(d.name) }}>
                                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 w-48 bg-[#1E293B] text-white p-4 rounded-3xl opacity-0 group-hover/bar:opacity-100 scale-90 group-hover/bar:scale-100 transition-all z-50 shadow-2xl">
-                                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{d.quality}% SIFAT</p>
-                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">{d.studentCount} o'quvchi</p>
+                                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{d.quality}% {t.quality_label}</p>
+                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">{d.studentCount} {t.student_info?.split(' ')[0] || 'o\'quvchi'}</p>
                                                 </div>
                                                 <div className="w-full bg-gradient-to-t from-blue-500/10 to-[#38BDF8] rounded-2xl group-hover/bar:ring-8 group-hover/bar:ring-blue-500/5 transition-all duration-500 h-0" style={{ height: `${Math.max(Number(d.quality), 10)}%` }}></div>
                                                 <span className="mt-4 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-tighter text-center group-hover/bar:text-[#38BDF8] transition-colors">{d.name}</span>
@@ -688,7 +688,7 @@ const AdminDashboard = () => {
                                             <div className="w-16 h-16 bg-blue-500/5 text-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0"><GraduationCap size={30} /></div>
                                             <div className="flex-1">
                                                 <h5 className="font-black text-[var(--text-main)] uppercase text-xs tracking-tight">{d.name}</h5>
-                                                <p className="text-[10px] text-[var(--text-muted)] font-bold">{d.studentCount} O'quvchi • {d.quality}% Sifat</p>
+                                                <p className="text-[10px] text-[var(--text-muted)] font-bold">{d.studentCount} {t.student_info?.split(' ')[0] || 'O\'quvchi'} • {d.quality}% {t.quality_label}</p>
                                             </div>
                                             <div className="p-3 bg-emerald-500/10 rounded-xl"><ArrowRight size={14} className="text-emerald-500" /></div>
                                         </div>
@@ -698,15 +698,15 @@ const AdminDashboard = () => {
                                 {/* RESTORED RECENT RESULTS TABLE */}
                                 <div className="bg-[var(--bg-card)] rounded-[56px] border border-[var(--border-main)] shadow-sm overflow-hidden" data-aos="fade-up">
                                     <div className="p-10 border-b border-[var(--border-main)] bg-[var(--bg-main)] opacity-80 flex justify-between items-center">
-                                        <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><TrendingUp size={20} className="text-emerald-500" /> {t.latest_results || 'Yaqindagi Natijalar'}</h3>
-                                        <button onClick={() => setActiveTab('results')} className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline">{t.all}</button>
+                                        <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><TrendingUp size={20} className="text-emerald-500" /> {t.latest_results}</h3>
+                                        <button onClick={() => setActiveTab('results')} className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline">{t.all_results}</button>
                                     </div>
                                     <div className="overflow-x-auto p-4">
                                         <table className="w-full text-left">
                                             <thead>
                                                 <tr>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.name}</th>
-                                                    <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">USTOZ</th>
+                                                    <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.teacher_caps}</th>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">{t.score_ball.toUpperCase()}</th>
                                                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">{t.status.toUpperCase()}</th>
                                                 </tr>
@@ -728,7 +728,7 @@ const AdminDashboard = () => {
                                                     </tr>
                                                 ))}
                                                 {students.filter(s => s.status === 'checked').length === 0 && (
-                                                    <tr><td colSpan="3" className="p-8 text-center text-[var(--text-muted)] uppercase text-[10px] font-black tracking-widest">Natijalar yo'q</td></tr>
+                                                    <tr><td colSpan="3" className="p-8 text-center text-[var(--text-muted)] uppercase text-[10px] font-black tracking-widest">{t.no_results_yet}</td></tr>
                                                 )}
                                             </tbody>
                                         </table>
@@ -756,7 +756,7 @@ const AdminDashboard = () => {
                                         ))}
                                     </div>
                                     <div className="mt-8 pt-8 border-t border-white/10 text-center relative z-10">
-                                        <button onClick={() => setActiveTab('results')} className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38BDF8] hover:text-white transition-colors">Barcha natijalar <ArrowRight size={10} className="inline ml-1" /></button>
+                                        <button onClick={() => setActiveTab('results')} className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38BDF8] hover:text-white transition-colors">{t.all_results} <ArrowRight size={10} className="inline ml-1" /></button>
                                     </div>
                                     <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12"><Trophy size={150} /></div>
                                 </div>
@@ -764,7 +764,7 @@ const AdminDashboard = () => {
                                 {/* System Activity Log */}
                                 <div className="bg-[var(--bg-card)] rounded-[56px] border border-[var(--border-main)] shadow-sm overflow-hidden flex flex-col h-[500px]">
                                     <div className="p-8 border-b border-[var(--border-main)] bg-[var(--bg-main)] opacity-80 flex justify-between items-center">
-                                        <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><Activity size={20} className="text-emerald-500" /> Tizim Faolligi</h3>
+                                        <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-2"><Activity size={20} className="text-emerald-500" /> {t.system_activity}</h3>
                                         <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
                                     </div>
                                     <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar">
@@ -784,7 +784,7 @@ const AdminDashboard = () => {
                                         )) : (
                                             <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] opacity-20 py-20">
                                                 <Activity size={48} className="mb-4" />
-                                                <p className="font-black uppercase tracking-widest text-[10px]">Hozircha faollik yo'q</p>
+                                                <p className="font-black uppercase tracking-widest text-[10px]">{t.no_activity_yet}</p>
                                             </div>
                                         )}
                                     </div>
@@ -943,10 +943,10 @@ const AdminDashboard = () => {
                                         {filteredTeachers.map(tData => (
                                             <div key={tData._id} className="p-8 pt-20 bg-[var(--bg-main)] rounded-[40px] border border-[var(--border-main)] hover:shadow-xl transition-all group relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all flex gap-2 z-20">
-                                                    <button onClick={() => { setEditTeacherData({ id: tData._id, name: tData.name, email: tData.email, subject: tData.subject }); setShowEditTeacherModal(true); }} className="p-3 bg-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/20 hover:scale-110 active:scale-95 transition-all" title="Tahrirlash"><Edit3 size={18} /></button>
-                                                    <button onClick={() => { setTaskData({ ...taskData, teacherId: tData._id, teacherName: tData.name }); setShowTaskModal(true); }} className="p-3 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:scale-110 active:scale-95 transition-all" title="Vazifa berish"><MessageSquarePlus size={18} /></button>
-                                                    <button onClick={() => { setResetData({ ...resetData, id: tData._id, name: tData.name }); setShowResetModal(true); }} className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-110 active:scale-95 transition-all" title="Parolni o'zgartirish"><Key size={18} /></button>
-                                                    <button onClick={() => handleDeleteTeacher(tData._id, tData.name)} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-110 active:scale-95 transition-all" title="O'chirish"><Trash2 size={18} /></button>
+                                                    <button onClick={() => { setEditTeacherData({ id: tData._id, name: tData.name, email: tData.email, subject: tData.subject }); setShowEditTeacherModal(true); }} className="p-3 bg-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/20 hover:scale-110 active:scale-95 transition-all" title={t.edit}><Edit3 size={18} /></button>
+                                                    <button onClick={() => { setTaskData({ ...taskData, teacherId: tData._id, teacherName: tData.name }); setShowTaskModal(true); }} className="p-3 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:scale-110 active:scale-95 transition-all" title={t.assign_task}><MessageSquarePlus size={18} /></button>
+                                                    <button onClick={() => { setResetData({ ...resetData, id: tData._id, name: tData.name }); setShowResetModal(true); }} className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-110 active:scale-95 transition-all" title={t.change_password}><Key size={18} /></button>
+                                                    <button onClick={() => handleDeleteTeacher(tData._id, tData.name)} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-110 active:scale-95 transition-all" title={t.delete}><Trash2 size={18} /></button>
                                                 </div>
                                                 <div className="flex items-center gap-6 mb-8 relative z-10">
                                                     <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-black shadow-xl overflow-hidden">
@@ -955,7 +955,7 @@ const AdminDashboard = () => {
                                                     <div className="flex-1">
                                                         <h4 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tight mb-1">{tData.name}</h4>
                                                         <p className="text-[10px] font-bold text-[var(--text-muted)] truncate">{tData.email}</p>
-                                                        <div className="inline-flex mt-3 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">Active Teacher</div>
+                                                        <div className="inline-flex mt-3 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">{t.active_teacher_tag}</div>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -995,7 +995,7 @@ const AdminDashboard = () => {
                     <div className="space-y-8 animate-in fade-in zoom-in duration-500">
                         {/* Filter Section */}
                         <div className="bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--border-main)] shadow-sm">
-                            <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter mb-6 flex items-center gap-3"><Users size={20} className="text-blue-500" /> Testlarni Filtrlash</h3>
+                            <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter mb-6 flex items-center gap-3"><Users size={20} className="text-blue-500" /> {t.filter_tests}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="relative">
                                     <select
@@ -1003,14 +1003,14 @@ const AdminDashboard = () => {
                                         value={testFilter}
                                         onChange={e => setTestFilter(e.target.value)}
                                     >
-                                        <option value="">Barcha Fanlar</option>
+                                        <option value="">{t.all_subjects}</option>
                                         {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                                     </select>
                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ChevronLeft size={16} className="-rotate-90" /></div>
                                 </div>
                                 <div className="relative">
                                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input type="text" placeholder="Ustoz yoki Mavzu qidirish..." className="w-full pl-12 pr-6 py-4 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-3xl text-sm font-bold outline-none text-[var(--text-main)]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                                    <input type="text" placeholder={t.search_placeholder_tests} className="w-full pl-12 pr-6 py-4 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-3xl text-sm font-bold outline-none text-[var(--text-main)]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                                 </div>
                             </div>
                         </div>
@@ -1028,9 +1028,9 @@ const AdminDashboard = () => {
                                                 try {
                                                     const res = await axios.get(`${API_URL}/tests/${test._id}`, config);
                                                     setViewingTest(res.data);
-                                                } catch (err) { toast.error('Yuklashda xatolik'); }
+                                                } catch (err) { toast.error(t.error_occurred); }
                                             }} className="p-3 bg-blue-500 text-white rounded-2xl hover:scale-110 transition-all"><Eye size={18} /></button>
-                                            <button onClick={async () => { if (window.confirm('O\'chirilsinmi?')) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`${API_URL}/tests/${test._id}`, config); toast.success('O\'chirildi'); fetchData(); } catch (err) { toast.error('Xatoplik'); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
+                                            <button onClick={async () => { if (window.confirm(t.delete_confirm)) { const config = { headers: { Authorization: `Bearer ${token}` } }; try { await axios.delete(`${API_URL}/tests/${test._id}`, config); toast.success(t.deleted); fetchData(); } catch (err) { toast.error(t.error_occurred); } } }} className="p-3 bg-rose-500 text-white rounded-2xl hover:scale-110 transition-all"><Trash2 size={18} /></button>
                                         </div>
                                         <div className="flex justify-between items-start mb-6">
                                             <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center"><BookOpen size={30} /></div>
@@ -1045,9 +1045,9 @@ const AdminDashboard = () => {
                                         </div>
 
                                         <div className="flex items-center gap-4 text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest border-t border-[var(--border-main)] pt-4">
-                                            <span>{test.count} Savol</span>
+                                            <span>{test.count} {t.question_count}</span>
                                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                            <span>Active</span>
+                                            <span>{t.active}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -1061,28 +1061,28 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="lg:col-span-1 h-fit sticky top-8">
                             <div className="bg-[var(--bg-card)] p-10 rounded-[48px] border border-[var(--border-main)] shadow-sm">
-                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase mb-6 flex items-center gap-3"><Users size={20} className="text-blue-500" /> Yangi Guruh</h3>
+                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase mb-6 flex items-center gap-3"><Users size={20} className="text-blue-500" /> {t.new_group}</h3>
                                 <form onSubmit={handleCreateGroup} className="space-y-4">
                                     <select
                                         className="w-full px-6 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] appearance-none"
                                         value={selectedSubject}
                                         onChange={e => setSelectedSubject(e.target.value)}
                                     >
-                                        <option value="">Yo'nalish...</option>
+                                        <option value="">{t.direction}...</option>
                                         {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                                     </select>
-                                    <input type="text" required placeholder="Guruh nomi..." className="w-full px-6 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)]" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
-                                    <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all">Yaratish</button>
+                                    <input type="text" required placeholder={t.group_name_placeholder || "Guruh nomi..."} className="w-full px-6 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)]" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
+                                    <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all">{t.create}</button>
                                 </form>
                             </div>
                             <div className="mt-8 bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--border-main)]">
-                                <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3 mb-2 block">Filtrlash</label>
+                                <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3 mb-2 block">{t.filter}</label>
                                 <select
                                     className="w-full px-6 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] appearance-none"
                                     value={groupSubjectFilter}
                                     onChange={e => setGroupSubjectFilter(e.target.value)}
                                 >
-                                    <option value="">Barcha Yo'nalishlar</option>
+                                    <option value="">{t.all_subjects}</option>
                                     {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                                 </select>
                             </div>
@@ -1106,10 +1106,10 @@ const AdminDashboard = () => {
                                             value={g.assignedTest?._id || g.assignedTest || ''}
                                             onChange={(e) => handleAssignTest(g._id, e.target.value)}
                                         >
-                                            <option value="">Test biriktirish...</option>
+                                            <option value="">{t.assign_test_placeholder || "Test biriktirish..."}</option>
                                             {activeTests.map(t => <option key={t._id} value={t._id}>{t.topic} ({t.count})</option>)}
                                         </select>
-                                        <button onClick={() => handleViewGroup(g)} className="w-full py-3 bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"><Eye size={14} /> Ko'rish</button>
+                                        <button onClick={() => handleViewGroup(g)} className="w-full py-3 bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"><Eye size={14} /> {t.view}</button>
                                     </div>
                                 </div>
                             ))}
@@ -1122,10 +1122,10 @@ const AdminDashboard = () => {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col gap-10">
                         <div className="grid grid-cols-1 gap-8">
                             <div className="p-8 border-b border-[var(--border-main)] bg-[var(--bg-main)] opacity-80 flex justify-between items-center">
-                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter">Ro'yxat</h3>
+                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.list_title || "Ro'yxat"}</h3>
                                 <div className="relative flex gap-2">
                                     <select className="px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-2xl text-xs font-bold outline-none text-[var(--text-main)] w-40" value={studentGroupFilter} onChange={e => setStudentGroupFilter(e.target.value)}>
-                                        <option value="">Barcha Guruhlar</option>
+                                        <option value="">{t.all_groups}</option>
                                         {groups.map(g => <option key={g._id} value={g._id}>{g.name}</option>)}
                                     </select>
                                     <div className="relative">
@@ -1138,12 +1138,12 @@ const AdminDashboard = () => {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">ID</th>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">O'quvchi</th>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">USTOZ</th>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">Guruh / Yo'nalish</th>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">Natija</th>
-                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">Amallar</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.id}</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.student}</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.teacher_caps || "USTOZ"}</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.group} / {t.direction}</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)]">{t.result}</th>
+                                            <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">{t.actions_label}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm font-bold text-[var(--text-main)]">
@@ -1160,17 +1160,17 @@ const AdminDashboard = () => {
                                                 </td>
                                                 <td className="p-4">
                                                     <div>
-                                                        <p className="text-xs">{s.groupId?.name || 'Guruhsiz'}</p>
+                                                        <p className="text-xs">{s.groupId?.name || t.no_group}</p>
                                                         <p className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest">{s.chosenSubject}</p>
                                                     </div>
                                                 </td>
-                                                <td className="p-4"><span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase ${s.status === 'checked' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{s.status === 'checked' ? `${s.score} ball` : 'Kutilmoqda'}</span></td>
+                                                <td className="p-4"><span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase ${s.status === 'checked' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{s.status === 'checked' ? `${s.score} ${t.score_ball}` : t.pending}</span></td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex justify-end gap-2">
                                                         {s.status === 'checked' && (
-                                                            <button onClick={() => setViewingResultStudent(s)} className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all" title="Batafsil ko'rish"><Eye size={16} /></button>
+                                                            <button onClick={() => setViewingResultStudent(s)} className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all" title={t.view_details}><Eye size={16} /></button>
                                                         )}
-                                                        <button onClick={() => handleDeleteStudent(s._id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all" title="O'chirish"><Trash2 size={16} /></button>
+                                                        <button onClick={() => handleDeleteStudent(s._id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all" title={t.delete}><Trash2 size={16} /></button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1189,7 +1189,7 @@ const AdminDashboard = () => {
                                 <h3 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter flex items-center gap-3">
                                     <TrendingUp className="text-emerald-500" /> {t.results}
                                 </h3>
-                                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">Barcha yo'nalishlar bo'yicha umumiy natijalar</p>
+                                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">{t.all_results_description || "Barcha yo'nalishlar bo'yicha umumiy natijalar"}</p>
                             </div>
                             <div className="relative w-full md:w-auto">
                                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1200,13 +1200,13 @@ const AdminDashboard = () => {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="border-b border-[var(--border-main)]">
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">O'quvchi</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Ustoz</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Yo'nalish</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Savollar</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Correct</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right">Ball</th>
-                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right">Analiz</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">{t.student}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">{t.teacher}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">{t.direction}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">{t.questions_title || "Savollar"}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">{t.correct}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right">{t.score_label}</th>
+                                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right">{t.analysis}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--border-main)]">
@@ -1228,7 +1228,7 @@ const AdminDashboard = () => {
                                             <td className="p-6 text-center font-bold text-[var(--text-main)]">{s.testId?.count || '-'}</td>
                                             <td className="p-6 text-center">
                                                 <span className={`px-3 py-1 rounded-lg text-[10px] font-black ${s.status === 'checked' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-400'}`}>
-                                                    {s.status === 'checked' ? s.correctCount : 'Pending'}
+                                                    {s.status === 'checked' ? s.correctCount : t.pending}
                                                 </span>
                                             </td>
                                             <td className="p-6 text-right"><span className={`text-xl font-black ${s.status === 'checked' ? 'text-indigo-500' : 'text-slate-400'}`}>{s.status === 'checked' ? s.score : '-'}</span></td>
@@ -1248,7 +1248,7 @@ const AdminDashboard = () => {
                         {/* Conversation List */}
                         <div className="lg:col-span-1 bg-[var(--bg-card)] rounded-[40px] border border-[var(--border-main)] flex flex-col overflow-hidden">
                             <div className="p-8 border-b border-[var(--border-main)] bg-[var(--bg-main)] opacity-80">
-                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter">Suhbatlar</h3>
+                                <h3 className="text-xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.conversations}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                                 {tasks.map((task) => (
@@ -1263,9 +1263,9 @@ const AdminDashboard = () => {
                                                     {task.teacher?.image ? <img src={task.teacher.image} alt={task.teacher.name} className="w-full h-full object-cover" /> : task.teacher?.name?.[0]}
                                                 </div>
                                                 <div className="overflow-hidden">
-                                                    <h4 className="font-black text-sm uppercase truncate max-w-[120px]">{task.teacher?.name || 'Ustoz'}</h4>
+                                                    <h4 className="font-black text-sm uppercase truncate max-w-[120px]">{task.teacher?.name || t.teacher}</h4>
                                                     <p className={`text-[8px] font-bold uppercase tracking-widest ${selectedTask?._id === task._id ? 'text-blue-100' : 'text-[var(--text-muted)]'}`}>
-                                                        {task.teacher?.subject || 'Fan yo\'q'}
+                                                        {task.teacher?.subject || t.no_subject}
                                                     </p>
                                                 </div>
                                             </div>
@@ -1292,7 +1292,7 @@ const AdminDashboard = () => {
                                 {tasks.length === 0 && (
                                     <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] opacity-20 p-10">
                                         <MessageSquare size={48} className="mb-4" />
-                                        <p className="font-black uppercase tracking-widest text-[10px]">Suhbatlar hali yo'q</p>
+                                        <p className="font-black uppercase tracking-widest text-[10px]">{t.no_conversations}</p>
                                     </div>
                                 )}
                             </div>
@@ -1340,7 +1340,7 @@ const AdminDashboard = () => {
                                                         <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
                                                     </div>
                                                     <span className="text-[9px] font-black text-[var(--text-muted)] mt-2 px-2 uppercase tracking-tighter">
-                                                        {msg.sender === 'admin' ? 'Siz (Admin)' : selectedTask.teacher?.name} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {msg.sender === 'admin' ? t.you_admin : selectedTask.teacher?.name} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1351,7 +1351,7 @@ const AdminDashboard = () => {
                                         <form onSubmit={handleSendChatMessage} className="flex gap-4 p-2 bg-[var(--bg-card)] rounded-[32px] border-2 border-[var(--border-main)] focus-within:border-blue-500/50 transition-all">
                                             <input
                                                 type="text"
-                                                placeholder="Suhbatni davom ettiring..."
+                                                placeholder={t.continue_chat_placeholder || "Suhbatni davom ettiring..."}
                                                 className="flex-1 bg-transparent border-none outline-none py-4 px-6 text-sm font-bold text-[var(--text-main)] placeholder:text-slate-400"
                                                 value={chatMessage}
                                                 onChange={(e) => setChatMessage(e.target.value)}
@@ -1368,8 +1368,8 @@ const AdminDashboard = () => {
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] p-20 text-center opacity-30 select-none">
                                     <div className="p-10 bg-[var(--bg-main)] rounded-full mb-8"><MessageSquare size={80} /></div>
-                                    <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Chat Tanlanmagan</h3>
-                                    <p className="text-sm font-bold max-w-sm">Chap tomondan biror ssuhbatni tanlang yoki Ustozlar bo'limidan yangi vazifa yuboring.</p>
+                                    <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">{t.no_chat_selected_title}</h3>
+                                    <p className="text-sm font-bold max-w-sm">{t.chat_select_prompt}</p>
                                 </div>
                             )}
                         </div>
@@ -1395,8 +1395,8 @@ const AdminDashboard = () => {
 
                                 <div className="flex-1 space-y-10 w-full">
                                     <div>
-                                        <span className="px-4 py-1.5 bg-blue-500/10 text-[#38BDF8] rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-500/20">Main Administrator</span>
-                                        <h3 className="text-4xl font-black text-[var(--text-main)] tracking-tighter mt-4 leading-none">{profileData.name || 'System Admin'}</h3>
+                                        <span className="px-4 py-1.5 bg-blue-500/10 text-[#38BDF8] rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-500/20">{t.main_administrator || "Main Administrator"}</span>
+                                        <h3 className="text-4xl font-black text-[var(--text-main)] tracking-tighter mt-4 leading-none">{profileData.name || t.system_admin}</h3>
                                         <p className="text-[var(--text-muted)] font-bold text-sm mt-2">{profileData.email}</p>
                                     </div>
 
@@ -1454,7 +1454,7 @@ const AdminDashboard = () => {
                                             </div>
                                         </div>
                                     ))}
-                                    {groupStudents.length === 0 && <p className="text-center text-[var(--text-muted)] py-10">O'quvchilar yo'q</p>}
+                                    {groupStudents.length === 0 && <p className="text-center text-[var(--text-muted)] py-10">{t.no_students}</p>}
                                 </div>
                             </div>
                         </div>
@@ -1488,7 +1488,7 @@ const AdminDashboard = () => {
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-center text-[var(--text-muted)] py-10">Savollar tahlili yuklanmoqda yoki mavjud emas.</p>
+                                        <p className="text-center text-[var(--text-muted)] py-10">{t.no_questions}</p>
                                     )}
                                 </div>
                             </div>
@@ -1509,7 +1509,7 @@ const AdminDashboard = () => {
                             <form onSubmit={handleResetPassword} className="space-y-6">
                                 <input type="text" placeholder="..." required className="w-full px-8 py-5 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-black text-sm text-center focus:bg-[var(--bg-card)] outline-none text-[var(--text-main)]" value={resetData.newPassword} onChange={e => setResetData({ ...resetData, newPassword: e.target.value })} />
                                 <div className="flex gap-4 pt-4">
-                                    <button type="button" onClick={() => setShowResetModal(false)} className="flex-1 py-5 bg-[var(--bg-main)] text-[var(--text-muted)] rounded-2xl font-black text-[10px] uppercase border border-[var(--border-main)]">Yopish</button>
+                                    <button type="button" onClick={() => setShowResetModal(false)} className="flex-1 py-5 bg-[var(--bg-main)] text-[var(--text-muted)] rounded-2xl font-black text-[10px] uppercase border border-[var(--border-main)]">{t.close_action || t.close || "Yopish"}</button>
                                     <button type="submit" className="flex-1 py-5 bg-[#38BDF8] text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20">{t.save}</button>
                                 </div>
                             </form>
@@ -1525,13 +1525,13 @@ const AdminDashboard = () => {
                         <div className="bg-[var(--bg-card)] rounded-[40px] max-w-md w-full shadow-2xl border border-[var(--border-main)] p-10 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
                             <div className="text-center mb-8">
                                 <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner"><Plus size={40} /></div>
-                                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">Yangi Yo'nalish</h2>
+                                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.new_subject}</h2>
                                 <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mt-2">{t.enter_details}</p>
                             </div>
                             <form onSubmit={handleAddSubject} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Yo'nalish Nomi</label>
-                                    <input type="text" autoFocus placeholder="Masalan: Matematika..." className="w-full px-6 py-5 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-emerald-500/10 transition-all" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} />
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">{t.subject_name_label || "Yo'nalish Nomi"}</label>
+                                    <input type="text" autoFocus placeholder={t.enter_subject_placeholder || "Masalan: Matematika..."} className="w-full px-6 py-5 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-emerald-500/10 transition-all" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 pt-4">
                                     <button type="button" onClick={() => setShowAddSubject(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">{t.cancel}</button>
@@ -1550,17 +1550,17 @@ const AdminDashboard = () => {
                         <div className="bg-[var(--bg-card)] rounded-[40px] max-w-md w-full shadow-2xl border border-[var(--border-main)] p-10 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
                             <div className="text-center mb-8">
                                 <div className="w-20 h-20 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner"><MessageSquarePlus size={40} /></div>
-                                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">Vazifa Berish</h2>
+                                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.assign_task}</h2>
                                 <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mt-2">{taskData.teacherName} uchun</p>
                             </div>
                             <form onSubmit={handleAssignTask} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Vazifa Matni</label>
-                                    <textarea autoFocus placeholder="Vazifani yozing..." className="w-full px-6 py-5 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none h-32" value={taskData.text} onChange={e => setTaskData({ ...taskData, text: e.target.value })} required />
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">{t.task_content}</label>
+                                    <textarea autoFocus placeholder={t.write_task_placeholder || "Vazifani yozing..."} className="w-full px-6 py-5 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none h-32" value={taskData.text} onChange={e => setTaskData({ ...taskData, text: e.target.value })} required />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 pt-4">
-                                    <button type="button" onClick={() => setShowTaskModal(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">Bekor qilish</button>
-                                    <button type="submit" className="py-4 bg-blue-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all">Yuborish</button>
+                                    <button type="button" onClick={() => setShowTaskModal(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">{t.cancel}</button>
+                                    <button type="submit" className="py-4 bg-blue-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all">{t.send}</button>
                                 </div>
                             </form>
                         </div>
@@ -1606,7 +1606,7 @@ const AdminDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-lg font-black text-[var(--text-main)]">{viewingResultStudent.fullName}</p>
-                                                <p className="text-xs font-bold text-blue-500">{t.id_login}: {viewingResultStudent.loginId} • {viewingResultStudent.teacherId?.name || '---'}</p>
+                                                <p className="text-xs font-bold text-blue-500">{t.id_login}: {viewingResultStudent.loginId} • {viewingResultStudent.teacherId?.name || "---"}</p>
                                                 <p className="text-xs font-bold text-[var(--text-muted)] mt-1">{t.group}: {viewingResultStudent.groupId?.name || t.unassigned}</p>
                                             </div>
                                         </div>
@@ -1653,7 +1653,9 @@ const AdminDashboard = () => {
                                         </div>
                                         <table className="w-full text-[10px]">
                                             <thead>
-                                                <tr className="border-b border-slate-100"><th className="py-2 text-left w-10">#</th><th className="py-2 text-left">{t.questions}</th><th className="py-2 text-center w-32">{t.variant}</th><th className="py-2 text-right w-20">{t.status}</th></tr>
+                                                <thead>
+                                                    <tr className="border-b border-slate-100"><th className="py-2 text-left w-10">#</th><th className="py-2 text-left">{t.questions_title}</th><th className="py-2 text-center w-32">{t.variant}</th><th className="py-2 text-right w-20">{t.status}</th></tr>
+                                                </thead>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
                                                 {(viewingResultStudent.answers || []).map((ans, idx) => {
@@ -1676,7 +1678,7 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="p-6 border-t border-[var(--border-main)] bg-[var(--bg-main)] print:hidden">
-                                <button onClick={() => setViewingResultStudent(null)} className="w-full py-3 bg-[var(--bg-card)] text-[var(--text-main)] rounded-[20px] font-bold text-sm border border-[var(--border-main)] hover:bg-[var(--bg-main)] transition-all">{t.cancel}</button>
+                                <button onClick={() => setViewingResultStudent(null)} className="w-full py-3 bg-[var(--bg-card)] text-[var(--text-main)] rounded-[20px] font-bold text-sm border border-[var(--border-main)] hover:bg-[var(--bg-main)] transition-all">{t.close_action || t.close || "Yopish"}</button>
                             </div>
                         </div>
                     </div>
@@ -1689,7 +1691,7 @@ const AdminDashboard = () => {
                     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
                         <div className="bg-[var(--bg-card)] p-8 rounded-[48px] max-w-md w-full border border-[var(--border-main)] shadow-2xl scale-100 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center mb-8">
-                                <h3 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">Tahrirlash</h3>
+                                <h3 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.edit}</h3>
                                 <button onClick={() => setShowEditTeacherModal(false)} className="p-3 hover:bg-[var(--bg-main)] rounded-2xl transition-all"><X size={20} className="text-[var(--text-muted)]" /></button>
                             </div>
                             <form onSubmit={handleUpdateTeacher} className="space-y-6">
@@ -1709,7 +1711,7 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Ism Familiya</label>
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">{t.full_name}</label>
                                     <input type="text" placeholder="..." className="w-full px-6 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all" value={editTeacherData.name} onChange={e => setEditTeacherData({ ...editTeacherData, name: e.target.value })} required />
                                 </div>
                                 <div className="space-y-2">
@@ -1732,8 +1734,8 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 pt-4">
-                                    <button type="button" onClick={() => setShowEditTeacherModal(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">Bekor qilish</button>
-                                    <button type="submit" className="py-4 bg-indigo-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all">Saqlash</button>
+                                    <button type="button" onClick={() => setShowEditTeacherModal(false)} className="py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--bg-main)] transition-all">{t.cancel}</button>
+                                    <button type="submit" className="py-4 bg-indigo-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all">{t.save}</button>
                                 </div>
                             </form>
                         </div>

@@ -134,13 +134,13 @@ const TeacherDashboard = () => {
     };
 
     const handleApproveEarlyAccess = async (studentId, approved) => {
-        const loadToast = toast.loading(approved ? 'Tasdiqlanmoqda...' : 'Rad etilmoqda...');
+        const loadToast = toast.loading(approved ? t.approving : t.rejecting);
         try {
             await axios.post(`${API_URL}/students/approve-early-access/${studentId}`, { approved }, config);
-            toast.success(approved ? 'Tasdiqlandi!' : 'Rad etildi', { id: loadToast });
+            toast.success(approved ? t.approved : t.rejected, { id: loadToast });
             fetchPendingApprovals();
         } catch (err) {
-            toast.error('Xatolik: ' + (err.response?.data?.message || err.message), { id: loadToast });
+            toast.error(t.error_occurred + ': ' + (err.response?.data?.message || err.message), { id: loadToast });
         }
     };
 
@@ -548,7 +548,7 @@ const TeacherDashboard = () => {
                             <Clock size={18} />
                             {pendingApprovals.length > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-[var(--bg-sidebar)] animate-pulse"></span>}
                         </div>
-                        <span className="font-bold text-sm">Ruxsat So'rovlari</span>
+                        <span className="font-bold text-sm">{t.early_access_requests}</span>
                         {pendingApprovals.length > 0 && <span className="ml-auto bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md">{pendingApprovals.length}</span>}
                     </button>
                     <button onClick={() => setShowTaskModal(true)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-slate-800 relative group`}>
@@ -1644,21 +1644,21 @@ const TeacherDashboard = () => {
                         <div className="flex items-center gap-4">
                             <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-[var(--text-main)] hover:bg-black/5 rounded-xl transition-colors"><Menu size={24} /></button>
                             <div>
-                                <h2 className="text-3xl font-black text-[var(--text-main)] uppercase tracking-tighter">Erta Kirish So'rovlari</h2>
-                                <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">O'quvchilar ruxsat kutmoqda</p>
+                                <h2 className="text-3xl font-black text-[var(--text-main)] uppercase tracking-tighter">{t.early_access_requests}</h2>
+                                <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">{t.students_waiting}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
                             <Clock size={16} className="text-amber-500" />
-                            <span className="text-sm font-black text-amber-500">{pendingApprovals.length} ta so'rov</span>
+                            <span className="text-sm font-black text-amber-500">{pendingApprovals.length} {t.requests_suffix}</span>
                         </div>
                     </header>
 
                     {pendingApprovals.length === 0 ? (
                         <div className="bg-[var(--bg-card)] p-12 rounded-[48px] border border-[var(--border-main)] text-center">
                             <Clock size={48} className="mx-auto text-slate-300 mb-4" />
-                            <p className="text-lg font-bold text-[var(--text-muted)]">Hozircha so'rovlar yo'q</p>
-                            <p className="text-sm text-[var(--text-muted)] mt-2">O'quvchilar erta kirish uchun so'rov yuborganda bu yerda ko'rinadi</p>
+                            <p className="text-lg font-bold text-[var(--text-muted)]">{t.no_requests_yet}</p>
+                            <p className="text-sm text-[var(--text-muted)] mt-2">{t.requests_explanation}</p>
                         </div>
                     ) : (
                         <div className="grid gap-6">
@@ -1675,7 +1675,7 @@ const TeacherDashboard = () => {
                                                     <div className="flex flex-wrap items-center gap-3 mt-2">
                                                         <span className="text-xs font-bold text-[var(--text-muted)]">ID: {student.loginId}</span>
                                                         <span className="text-xs px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full border border-blue-500/20 font-bold">
-                                                            {student.groupId?.name || 'Guruhsiz'}
+                                                            {student.groupId?.name || t.no_group}
                                                         </span>
                                                         <span className="text-xs px-3 py-1 bg-purple-500/10 text-purple-500 rounded-full border border-purple-500/20 font-bold">
                                                             {student.chosenSubject || user?.subject}
@@ -1686,9 +1686,9 @@ const TeacherDashboard = () => {
 
                                             <div className="grid grid-cols-1 gap-4 p-4 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-main)]">
                                                 <div>
-                                                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">So'rov vaqti</p>
+                                                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">{t.request_time}</p>
                                                     <p className="text-sm font-bold text-[var(--text-main)]">
-                                                        {new Date(student.earlyAccessRequest?.requestedAt).toLocaleString('uz-UZ', {
+                                                        {new Date(student.earlyAccessRequest?.requestedAt).toLocaleString(language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-US', {
                                                             day: '2-digit',
                                                             month: 'short',
                                                             year: 'numeric',
@@ -1706,14 +1706,14 @@ const TeacherDashboard = () => {
                                                 className="flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-sm hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
                                             >
                                                 <Check size={18} />
-                                                Tasdiqlash
+                                                {t.approve}
                                             </button>
                                             <button
                                                 onClick={() => handleApproveEarlyAccess(student._id, false)}
                                                 className="flex items-center justify-center gap-2 px-6 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-rose-500/20"
                                             >
                                                 <X size={18} />
-                                                Rad etish
+                                                {t.reject}
                                             </button>
                                         </div>
                                     </div>
