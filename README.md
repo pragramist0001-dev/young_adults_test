@@ -1,66 +1,59 @@
-Loyihani Deploy Qilish Qo'llanmasi (Render.com)
-Netlify asosan frontend (static saytlar) uchun mo'ljallangan. Sizning loyihangiz MERN stack (MongoDB, Express, React, Node.js) bo'lgani uchun, backend server ham ishlashi kerak.
+# EduTest - O'quv Markazi Boshqaruv Tizimi
 
-Eng yaxshi va bepul variant: Render.com. Bu platformada Frontend va Backend alohida, lekin juda oson bog'lanadi.
+EduTest — bu o'quv markazlari uchun mo'ljallangan zamonaviy boshqaruv platformasi. Tizim o'qituvchilar, talabalar va dars jarayonlarini samarali boshqarish imkonini beradi.
 
-⚠️ Muhim Eslatma (Ma'lumotlar Bazasi)
-Sizning loyihangizda 
-students.json
- fayli bor. Deploy qilinganda fayllar o'zgarishi saqlanmaydi! Server har safar qayta ishga tushganda (restart), 
-students.json
- fayli asl holatiga qaytadi. Shuning uchun, MongoDB Atlas (Cloud Database) ishlatish shart. Lokal mongodb://localhost... internetda ishlamaydi.
+## 🚀 Xususiyatlari
 
-1-qadam: MongoDB Atlas (Agar yo'q bo'lsa)
-MongoDB Atlas saytidan ro'yxatdan o'ting.
-Bepul klaster (Shared Cluster) yarating.
-"Database Access" bo'limida yangi user va parol yarating.
-"Network Access" bo'limida "Allow Access from Anywhere (0.0.0.0/0)" ni tanlang.
-"Connect" tugmasini bosib, ulanish linkini oling (masalan: mongodb+srv://user:password@cluster.mongodb.net/...).
-2-qadam: Backend (Server) Deploy
-Render.com saytidan ro'yxatdan o'ting (GitHub orqali).
+- **Admin Paneli**: Talabalar va o'qituvchilarni boshqarish, guruhlar yaratish.
+- **O'qituvchi Kabineti**: Dars jadvallari, vazifalar yuklash va talabalar natijalarini kuzatish.
+- **Test Tizimi**: Onlayn testlar yaratish va ularni topshirish.
+- **Statistika**: O'zlashtirish ko'rsatkichlarini grafik ko'rinishida ko'rish.
+- **Ko'ptillilik**: O'zbek, Rus va Ingliz tillarida interfeys.
 
-"New +" tugmasini bosib, "Web Service" ni tanlang.
+## 🛠 Texnologiyalar
 
-GitHub repozitoriyingizni ulang.
+- **Frontend**: React.js, Vite, Tailwind CSS, Redux Toolkit.
+- **Backend**: Node.js, Express.js.
+- **Ma'lumotlar bazasi**: MongoDB (Mongoose ORM).
+- **Xavfsizlik**: JSON Web Token (JWT), BCrypt.
 
-Quyidagi sozlamalarni kiriting:
+## 📂 Loyiha Tuzilmasi
 
-Name: markaz-backend (yoki xohlagan nom)
-Root Directory: server (juda muhim!)
-Environment: Node
-Build Command: npm install
-Start Command: node index.js
-Plan: Free
-Environment Variables bo'limiga o'ting va qo'shing:
+- `/client` — Frontend (React dasturi)
+- `/server` — Backend (API server)
+- `render.yaml` — Avtomatik deploy sozlamalari
 
-MONGO_URI: (MongoDB Atlas ulanish linki)
-JWT_SECRET: (xohlagan maxfiy so'z)
-PORT: 10000 (yoki avtomatik 10000 bo'ladi)
-"Create Web Service" tugmasini bosing.
+## 💻 Mahalliy Ishga Tushirish
 
-Deploy tugagach, yuqorida backend URL paydo bo'ladi (masalan: https://markaz-backend.onrender.com). Buni nusxalab oling.
+1. Repozitoriyani yuklab oling:
+   ```bash
+   git clone https://github.com/pragramist0001-dev/young_adults_test.git
+   cd young_adults_test
+   ```
 
-3-qadam: Frontend (Client) Deploy
-Render.com da "New +" -> "Static Site" ni tanlang.
+2. Backend-ni sozlang:
+   ```bash
+   cd server
+   npm install
+   # .env faylini yarating va MONGO_URI, JWT_SECRET kiriting
+   npm run dev
+   ```
 
-Xuddi shu GitHub repozitoriyini tanlang.
+3. Frontend-ni sozlang:
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
 
-Sozlamalar:
+## 🌐 Deploy Qilish (Render.com)
 
-Name: markaz-frontend
-Root Directory: client (juda muhim!)
-Build Command: npm install && npm run build (yoki npm run build)
-Publish Directory: dist
-Environment Variables bo'limiga o'ting:
+Loyiha Render.com uchun to'liq sozlangan (`render.yaml`). 
 
-VITE_API_URL: (2-qadamda olgan Backend URLingiz, oxirida /api qo'shing. Masalan: https://markaz-backend.onrender.com/api)
-"Create Static Site" tugmasini bosing.
+1. GitHub-ga push qiling.
+2. Render.com da **Blueprints** bo'limiga kiring.
+3. Repozitoriyangizni ulang.
+4. Render avtomatik ravishda barcha sozlamalarni o'qiydi. Sizdan faqat `MONGO_URI` (MongoDB Atlas linki) so'raladi.
 
-🎉 Natija
-Deploy tugagach, Frontend URL orqali saytga kirishingiz mumkin.
-
-Frontend so'rovlarni avtomatik ravishda Render dagi Backend ga yuboradi.
-Ma'lumotlar MongoDB Atlas da xavfsiz saqlanadi.
-Muammolar chiqsa:
-Render da "Logs" bo'limini tekshiring.
-MongoDB IP address ruxsati (Network Access) ochiqligini tekshiring.
+---
+© 2026 EduTest Platform. Barcha huquqlar himoyalangan.

@@ -1,0 +1,37 @@
+services:
+  # Backend (Server)
+  - type: web
+    name: young-adults-test-server
+    runtime: node
+    buildCommand: npm install
+    startCommand: node index.js
+    rootDir: server
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+
+  # Frontend (Client)
+  - type: static
+    name: young-adults-test-client
+    runtime: static
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    rootDir: client
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: young-adults-test-server
+          property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
