@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { answerQuestion, nextQuestion, prevQuestion, finishTest, setScore } from '../features/test/testSlice';
 import { translations } from '../utils/translations';
+import toast from 'react-hot-toast';
 import { API_URL } from '../utils/apiConfig';
 
 const TestPage = () => {
@@ -52,6 +53,7 @@ const TestPage = () => {
             dispatch(setScore(res.data.score));
             dispatch(finishTest());
         } catch (err) {
+            console.error(err);
             toast.error(t.error_occurred);
         } finally {
             setSubmitting(false);

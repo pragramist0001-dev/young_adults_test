@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { isDbConnected, readData, writeData } = require('../utils/fallbackStorage');
 
 exports.register = async (req, res) => {
-    const { name, email, password, role, subject } = req.body;
+    const { name, email, password, role, subject, branch } = req.body;
 
     // IMMEDIATE HYBRID CHECK: If DB is not connected, use local storage right away
     if (!isDbConnected()) {
@@ -23,6 +23,7 @@ exports.register = async (req, res) => {
                 plainPassword: password, // Save visible version
                 role: role || 'teacher',
                 subject,
+                branch: branch || req.user.branch || 'Asosiy',
                 tasks: [],
                 createdAt: new Date().toISOString()
             };
@@ -48,7 +49,8 @@ exports.register = async (req, res) => {
             password: hashedPassword,
             plainPassword: password, // Save visible version
             role: role || 'teacher',
-            subject
+            subject,
+            branch: branch || req.user.branch || 'Asosiy'
         });
 
         await newUser.save();
@@ -108,9 +110,9 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Parol noto\'g\'ri' });
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, subject: user.subject, image: user.image } });
+        const token = jwt.sign({ id: user._id, role: user.role, branch: user.branch }, process.env.JWT_SECRET, { expiresIn: '1d' });
+ 
+        res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, subject: user.subject, branch: user.branch, image: user.image } });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ message: 'Server xatosi: ' + err.message });
@@ -121,12 +123,12 @@ exports.login = async (req, res) => {
 exports.getTeachers = async (req, res) => {
     try {
         if (!isDbConnected()) throw new Error('DB Disconnected');
-        const teachers = await User.find({ role: 'teacher' }).select('-password');
-        // plainPassword will be included because it's not excluded
+        const filter = { role: 'teacher' };
+        const teachers = await User.find(filter).select('-password');
         res.json(teachers);
     } catch (err) {
-        // Fallback to local JSON
-        const localTeachers = readData('User').filter(u => u.role === 'teacher').map(({ password, ...u }) => u);
+        const branchFilter = req.user.branch || 'Asosiy';
+        const localTeachers = readData('User').filter(u => u.role === 'teacher' && (u.branch === branchFilter || req.user.role === 'admin')).map(({ password, ...u }) => u);
         res.json(localTeachers);
     }
 };

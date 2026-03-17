@@ -8,7 +8,8 @@ const TestSchema = new mongoose.Schema({
     accessCode: { type: String, required: true, unique: true },
     isActive: { type: Boolean, default: true },
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
-    count: { type: Number, required: true }
+    count: { type: Number, required: true },
+    branch: { type: String, default: 'Asosiy' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Test', TestSchema);

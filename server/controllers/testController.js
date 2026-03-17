@@ -6,7 +6,8 @@ const { isDbConnected, readData, writeData } = require('../utils/fallbackStorage
 exports.createTest = async (req, res) => {
     try {
         const { subject, topic, count } = req.body;
-        const teacherId = req.user.id;
+        const teacherId = req.user._id || req.user.id;
+        const mongoose = require('mongoose');
 
         // Generate 4-digit code
         let accessCode;
@@ -25,7 +26,8 @@ exports.createTest = async (req, res) => {
 
         if (!isDbConnected()) {
             const allQuestions = readData('Question') || [];
-            const subjectQuestions = allQuestions.filter(q => q.subject === subject && q.teacherId === teacherId);
+            const branch = req.user.branch || 'Asosiy';
+            const subjectQuestions = allQuestions.filter(q => q.subject === subject && q.teacherId === teacherId && q.branch === branch);
             const selectedQuestions = subjectQuestions.sort(() => 0.5 - Math.random()).slice(0, count);
             const questionIds = selectedQuestions.map(q => q._id);
 
@@ -48,12 +50,14 @@ exports.createTest = async (req, res) => {
 
         // DB Logic
         let questionIds;
-        if (req.body.questions && req.body.questions.length > 0) {
+        const validTeacherObjectId = new mongoose.Types.ObjectId(req.user._id || req.user.id);
+        
+        if (req.body.questions && Array.isArray(req.body.questions) && req.body.questions.length > 0) {
             questionIds = req.body.questions;
         } else {
             const questions = await Question.aggregate([
-                { $match: { subject, teacherId: new mongoose.Types.ObjectId(teacherId) } },
-                { $sample: { size: Number(count) } }
+                { $match: { subject, teacherId: validTeacherObjectId } },
+                { $sample: { size: Number(count) || 10 } }
             ]);
             questionIds = questions.map(q => q._id);
         }
@@ -64,7 +68,8 @@ exports.createTest = async (req, res) => {
             topic,
             questions: questionIds,
             accessCode,
-            count: questionIds.length
+            count: questionIds.length,
+            branch: req.user.branch || 'Asosiy'
         });
 
         await newTest.save();
@@ -78,7 +83,7 @@ exports.createTest = async (req, res) => {
 // Get Teacher's Tests (Admin gets all)
 exports.getMyTests = async (req, res) => {
     try {
-        let filter = { teacherId: req.user._id, isActive: true };
+        let filter = { teacherId: req.user._id || req.user.id, isActive: true, branch: req.user.branch || 'Asosiy' };
         if (req.user.role === 'admin') {
             filter = { isActive: true };
         }
@@ -124,7 +129,7 @@ exports.getTestById = async (req, res) => {
 
         // Check authorization
         // Check authorization
-        if (test.teacherId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (test.teacherId.toString() !== (req.user._id || req.user.id).toString() && req.user.role !== 'admin') {
             return res.status(401).json({ message: 'Ruxsat yo\'q' });
         }
 
@@ -146,7 +151,7 @@ exports.addQuestions = async (req, res) => {
         const test = await Test.findById(id);
         if (!test) return res.status(404).json({ message: 'Test topilmadi' });
 
-        if (test.teacherId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (test.teacherId.toString() !== (req.user._id || req.user.id).toString() && req.user.role !== 'admin') {
             return res.status(401).json({ message: 'Ruxsat yo\'q' });
         }
 
@@ -184,7 +189,7 @@ exports.deleteTest = async (req, res) => {
         if (!test) return res.status(404).json({ message: 'Test topilmadi' });
 
         // Check authorization
-        if (test.teacherId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (test.teacherId.toString() !== (req.user._id || req.user.id).toString() && req.user.role !== 'admin') {
             return res.status(401).json({ message: 'Ruxsat yo\'q' });
         }
 

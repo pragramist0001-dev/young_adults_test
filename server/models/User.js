@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
     image: { type: String }, // Profile picture URL or Base64
     role: { type: String, enum: ['admin', 'teacher'], default: 'teacher' },
     subject: { type: String }, // For teachers
+    branch: { type: String, default: 'Asosiy' }, // Branch/Center name
     tasks: [{
         text: { type: String, required: true },
         status: { type: String, enum: ['pending', 'completed'], default: 'pending' },

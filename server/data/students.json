@@ -91,5 +91,109 @@
       "adminApproved": false,
       "approved": false
     }
+  },
+  {
+    "_id": "1770633087335",
+    "fullName": "G'ani",
+    "loginId": "1487",
+    "chosenSubject": "Front-end",
+    "groupId": "1770633068613",
+    "teacherId": "1770632951865",
+    "status": "checked",
+    "score": 1,
+    "createdAt": "2026-02-09T10:31:27.335Z",
+    "testId": "1770633047784",
+    "correctCount": 1,
+    "wrongCount": 1,
+    "timeSpent": "00:10",
+    "answers": [
+      {
+        "questionId": "1770633047768",
+        "selectedOption": "sasdassa"
+      },
+      {
+        "questionId": "1770633047779",
+        "selectedOption": "assass"
+      }
+    ],
+    "lastAccessDate": "2026-02-09T10:32:26.213Z",
+    "earlyAccessRequest": {
+      "requested": true,
+      "requestedAt": "2026-02-09T10:32:52.223Z",
+      "teacherApproved": false,
+      "adminApproved": false,
+      "approved": false,
+      "used": false,
+      "teacherApprovedAt": "2026-02-09T10:33:08.480Z",
+      "teacherApprovedBy": "1770632951865"
+    }
+  },
+  {
+    "_id": "1770814010958",
+    "fullName": "Go'zal",
+    "loginId": "9120",
+    "chosenSubject": "Front-end",
+    "groupId": "1770633068613",
+    "teacherId": "1770632951865",
+    "status": "checked",
+    "score": 1,
+    "createdAt": "2026-02-11T12:46:50.958Z",
+    "correctCount": 1,
+    "wrongCount": 1,
+    "timeSpent": "00:16",
+    "answers": [
+      {
+        "questionId": "1770633047768",
+        "selectedOption": "sasdassa"
+      },
+      {
+        "questionId": "1770633047779",
+        "selectedOption": "assass"
+      }
+    ],
+    "testId": "1770633047784",
+    "lastAccessDate": "2026-02-11T12:47:22.607Z",
+    "earlyAccessRequest": {
+      "requested": true,
+      "requestedAt": "2026-02-11T12:47:51.367Z",
+      "teacherApproved": false,
+      "adminApproved": false,
+      "approved": false,
+      "used": false,
+      "teacherApprovedAt": "2026-02-11T12:48:07.560Z",
+      "teacherApprovedBy": "1770632951865"
+    }
+  },
+  {
+    "_id": "1770818682031",
+    "fullName": "dilshod",
+    "loginId": "4276",
+    "chosenSubject": "Ingliz tili",
+    "groupId": "1770818657217",
+    "teacherId": "1770818538632",
+    "status": "checked",
+    "score": 1,
+    "createdAt": "2026-02-11T14:04:42.031Z",
+    "correctCount": 1,
+    "wrongCount": 1,
+    "timeSpent": "00:04",
+    "answers": [
+      {
+        "questionId": "1770818638601",
+        "selectedOption": "sdsad"
+      },
+      {
+        "questionId": "1770818638614",
+        "selectedOption": "sadas"
+      }
+    ],
+    "testId": "1770818638622",
+    "lastAccessDate": "2026-02-11T14:05:02.669Z",
+    "earlyAccessRequest": {
+      "requested": false,
+      "teacherApproved": false,
+      "adminApproved": false,
+      "approved": false
+    }
   }
 ]

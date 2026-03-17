@@ -49,7 +49,8 @@ exports.createStudent = async (req, res) => {
             loginId,
             chosenSubject,
             groupId,
-            teacherId: req.user.id
+            teacherId: req.user.id,
+            branch: req.user.branch || 'Asosiy'
         });
         await student.save();
         res.status(201).json(student);
@@ -227,7 +228,12 @@ exports.submitTest = async (req, res) => {
 
         const student = await Student.findById(studentId);
         if (!student) return res.status(404).json({ message: 'Student not found' });
-        if (student.status === 'checked') return res.status(400).json({ message: 'Allaqachon topshirilgan.' });
+        
+        // Allow submission if they have early access approval or if they haven't submitted yet
+        const hasEarlyAccessApproval = student.earlyAccessRequest?.teacherApproved;
+        if (student.status === 'checked' && !hasEarlyAccessApproval) {
+            return res.status(400).json({ message: 'Allaqachon topshirilgan.' });
+        }
 
         let score = 0;
         let correctCount = 0;
@@ -287,6 +293,11 @@ exports.submitTest = async (req, res) => {
             const studentIdx = students.findIndex(s => s._id === req.body.studentId);
 
             if (studentIdx !== -1) {
+                const hasEarlyAccessApproval = students[studentIdx].earlyAccessRequest?.teacherApproved;
+                if (students[studentIdx].status === 'checked' && !hasEarlyAccessApproval) {
+                    return res.status(400).json({ message: 'Allaqachon topshirilgan.' });
+                }
+
                 const answers = req.body.answers || [];
                 let score = 0;
                 let correctCount = 0;
@@ -335,14 +346,14 @@ exports.submitTest = async (req, res) => {
 exports.getStudentsBySubject = async (req, res) => {
     try {
         const { subject } = req.params;
+        const branchFilter = req.user.branch || 'Asosiy';
         if (!isDbConnected()) {
             const students = readData('Student');
             const groups = readData('Group') || [];
             const questions = readData('Question') || [];
-
             const users = readData('User') || [];
 
-            const filtered = students.filter(s => s.chosenSubject === subject).map(s => {
+            const filtered = students.filter(s => s.chosenSubject === subject && (s.branch === branchFilter || req.user.role === 'admin')).map(s => {
                 const group = groups.find(g => g._id === s.groupId);
                 const teacher = users.find(u => u._id === s.teacherId);
                 // Manually populate answers
@@ -360,7 +371,7 @@ exports.getStudentsBySubject = async (req, res) => {
             }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             return res.json(filtered);
         }
-        const students = await Student.find({ chosenSubject: subject })
+        const students = await Student.find({ chosenSubject: subject, branch: branchFilter })
             .populate('groupId', 'name')
             .populate('testId', 'topic')
             .populate('teacherId', 'name')

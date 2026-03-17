@@ -605,6 +605,7 @@ const AdminDashboard = () => {
 
 
                     <div className="flex items-center gap-4">
+
                         <div className="bg-[var(--bg-main)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-main)] mr-2">
                             {['week', 'month', 'all'].map(period => (
                                 <button key={period} onClick={() => setTimeFilter(period)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${timeFilter === period ? 'bg-[var(--bg-card)] text-[#38BDF8] shadow-md' : 'text-slate-400'}`}>
@@ -1719,15 +1720,13 @@ const AdminDashboard = () => {
                                     <input type="email" placeholder="..." className="w-full px-6 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all" value={editTeacherData.email} onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">Fan</label>
+                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-3">{t.subject}</label>
                                     <div className="relative">
                                         <select
-                                            className="w-full pl-6 pr-12 py-4 rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none appearance-none text-[var(--text-main)] focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full pl-6 pr-12 py-4 rounded-3xl border border-[var(--border-main)] bg-[var(--bg-main)] font-bold text-sm outline-none appearance-none text-[var(--text-main)]"
                                             value={editTeacherData.subject}
                                             onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })}
-                                            required
                                         >
-                                            <option value="" disabled>Tanlang...</option>
                                             {subjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ChevronLeft size={16} className="-rotate-90" /></div>

@@ -461,5 +461,61 @@
     "subject": "Back-end",
     "teacherId": "1770465023344",
     "createdAt": "2026-02-07T11:50:49.434Z"
+  },
+  {
+    "_id": "1770633047768",
+    "questionText": "savol 1",
+    "options": [
+      "sasdassa",
+      "sasa",
+      "sasasas",
+      "sas"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1770632951865",
+    "createdAt": "2026-02-09T10:30:47.768Z"
+  },
+  {
+    "_id": "1770633047779",
+    "questionText": "sasas",
+    "options": [
+      "saasas",
+      "assass",
+      "saassa",
+      "assdsad"
+    ],
+    "correctOption": 0,
+    "subject": "Front-end",
+    "teacherId": "1770632951865",
+    "createdAt": "2026-02-09T10:30:47.779Z"
+  },
+  {
+    "_id": "1770818638601",
+    "questionText": "savol 1",
+    "options": [
+      "sdsad",
+      "sdas",
+      "sadasd",
+      "sdsad"
+    ],
+    "correctOption": 0,
+    "subject": "Ingliz tili",
+    "teacherId": "1770818538632",
+    "createdAt": "2026-02-11T14:03:58.601Z"
+  },
+  {
+    "_id": "1770818638614",
+    "questionText": "sda",
+    "options": [
+      "sadad",
+      "sadas",
+      "dsadas",
+      "sadad"
+    ],
+    "correctOption": 0,
+    "subject": "Ingliz tili",
+    "teacherId": "1770818538632",
+    "createdAt": "2026-02-11T14:03:58.614Z"
   }
 ]

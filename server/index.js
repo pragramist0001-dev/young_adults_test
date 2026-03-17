@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -25,6 +27,18 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.get('/', (req, res) => {
     res.send('EduTest API Running');
 });
+
+// Serve static assets in production
+const publicPath = path.join(__dirname, 'public');
+if (process.env.NODE_ENV === 'production' || fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+        }
+    });
+}
 
 const PORT = process.env.PORT || 5000;
 

@@ -21,6 +21,7 @@ const TeacherDashboard = () => {
         correctOption: 0,
     });
 
+    // eslint-disable-next-line no-unused-vars
     const [myQuestions, setMyQuestions] = useState([]);
     const [activeTab, setActiveTab] = useState(localStorage.getItem('teacherActiveTab') || 'overview');
     const [profileData, setProfileData] = useState({ name: '', email: '', password: '', image: '' });
@@ -32,6 +33,7 @@ const TeacherDashboard = () => {
     // Test Builder State
     const [topicName, setTopicName] = useState('');
     const [builderQuestions, setBuilderQuestions] = useState([]); // List of questions for the current test
+    // eslint-disable-next-line no-unused-vars
     const [isBuilding, setIsBuilding] = useState(false);
 
     // New State for Groups
@@ -150,9 +152,7 @@ const TeacherDashboard = () => {
             // Fetch questions for this test
             const res = await axios.get(`${API_URL}/tests/${test._id}`, config);
             setTestQuestions(res.data.questions || []);
-        } catch (err) {
-            toast.error('Savollarni yuklashda xato');
-        }
+        } catch (err) { console.error(err); toast.error('Savollarni yuklashda xato'); }
     };
 
     const handleDeleteTest = async (testId, e) => {
@@ -163,9 +163,7 @@ const TeacherDashboard = () => {
             await axios.delete(`${API_URL}/tests/${testId}`, config);
             toast.success('Test o\'chirildi');
             fetchTests();
-        } catch (err) {
-            toast.error('Xatolik: ' + err.message);
-        }
+        } catch (err) { console.error(err); toast.error('Xatolik: ' + err.message); }
     };
 
     const handlePrint = () => {
@@ -206,9 +204,7 @@ const TeacherDashboard = () => {
             if (!updateObj.password) delete updateObj.password;
             await axios.put(`${API_URL}/auth/profile`, updateObj, config);
             toast.success('Profil muvaffaqiyatli yangilandi!', { id: loadToast });
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast });
-        }
+        } catch (err) { console.error(err); toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast }); }
     };
 
     const handleImageUpload = (e) => {
@@ -306,27 +302,6 @@ const TeacherDashboard = () => {
         }
     };
 
-    const handleEdit = (q) => {
-        setQData({
-            questionText: q.questionText,
-            options: [...q.options],
-            correctOption: q.correctOption
-        });
-        setEditingId(q._id);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm('Haqiqatan ham o\'chirmoqchimisiz?')) return;
-        try {
-            await axios.delete(`${API_URL}/questions/${id}`, config);
-            toast.success('Savol o\'chirildi');
-            fetchQuestions();
-        } catch (err) {
-            toast.error('Xatolik');
-        }
-    };
-
     const handleAddStudent = async (e) => {
         e.preventDefault();
         const loadToast = toast.loading('O\'quvchi qo\'shilmoqda...');
@@ -340,9 +315,7 @@ const TeacherDashboard = () => {
             setNewStudentName('');
             setSelectedGroup(null);
             fetchStudents();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast });
-        }
+        } catch (err) { console.error(err); toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast }); }
     };
 
     const handleAssignTest = async (groupId, testId) => {
@@ -350,9 +323,7 @@ const TeacherDashboard = () => {
             await axios.put(`${API_URL}/groups/${groupId}/assign-test`, { testId }, config);
             toast.success('Test guruhga biriktirildi!');
             fetchGroups(); // Refresh groups to show updated assignment
-        } catch (err) {
-            toast.error('Xatolik: ' + err.message);
-        }
+        } catch (err) { console.error(err); toast.error('Xatolik: ' + err.message); }
     };
 
     const handleViewGroup = async (group) => {
@@ -388,9 +359,7 @@ const TeacherDashboard = () => {
             setSelectedTask(res.data);
             setChatMessage('');
             fetchTasks();
-        } catch (err) {
-            toast.error('Xabar yuborishda xato');
-        }
+        } catch (err) { console.error(err); toast.error('Xabar yuborishda xato'); }
     };
 
     const handleUpdateTaskStatus = async (taskId, status) => {
@@ -398,9 +367,7 @@ const TeacherDashboard = () => {
             await axios.put(`${API_URL}/tasks/${taskId}/status`, { status }, config);
             fetchTasks();
             toast.success('Holat yangilandi');
-        } catch (err) {
-            toast.error('Xatolik');
-        }
+        } catch (err) { console.error(err); toast.error('Xatolik'); }
     };
 
     const stats = useMemo(() => {
@@ -452,23 +419,7 @@ const TeacherDashboard = () => {
             setEditingGroup(null);
             setEditGroupName('');
             fetchGroups();
-        } catch (err) {
-            toast.error('Xatolik: ' + err.message);
-        }
-    };
-
-    // New Handlers
-    const handleCreateTest = async (e) => {
-        e.preventDefault();
-        const loadToast = toast.loading('Test ID olinmoqda...');
-        try {
-            await axios.post(`${API_URL}/tests`, { ...testData, subject: user.subject }, config);
-            toast.success('Test yaratildi! ID nusxalandi.', { id: loadToast });
-            setTestData({ topic: '', count: 10 });
-            fetchTests();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Xatolik', { id: loadToast });
-        }
+        } catch (err) { console.error(err); toast.error('Xatolik: ' + err.message); }
     };
 
     const handleCreateGroup = async (e) => {
@@ -479,9 +430,7 @@ const TeacherDashboard = () => {
             toast.success('Guruh yaratildi!', { id: loadToast });
             setNewGroupName('');
             fetchGroups();
-        } catch (err) {
-            toast.error('Xatolik', { id: loadToast });
-        }
+        } catch (err) { console.error(err); toast.error('Xatolik', { id: loadToast }); }
     };
 
     const handleDeleteGroup = async (id) => {
@@ -491,11 +440,6 @@ const TeacherDashboard = () => {
             toast.success('Guruh o\'chirildi');
             fetchGroups();
         } catch (err) { toast.error('Xatolik'); }
-    };
-
-    const handleCancelEdit = () => {
-        setQData({ questionText: '', options: ['', '', '', ''], correctOption: 0 });
-        setEditingId(null);
     };
 
     const handleOptionChange = (index, value) => {
@@ -1688,13 +1632,13 @@ const TeacherDashboard = () => {
                                                 <div>
                                                     <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">{t.request_time}</p>
                                                     <p className="text-sm font-bold text-[var(--text-main)]">
-                                                        {new Date(student.earlyAccessRequest?.requestedAt).toLocaleString(language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-US', {
+                                                        {student.earlyAccessRequest?.requestedAt ? new Date(student.earlyAccessRequest.requestedAt).toLocaleString(language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-US', {
                                                             day: '2-digit',
                                                             month: 'short',
                                                             year: 'numeric',
                                                             hour: '2-digit',
                                                             minute: '2-digit'
-                                                        })}
+                                                        }) : ''}
                                                     </p>
                                                 </div>
                                             </div>

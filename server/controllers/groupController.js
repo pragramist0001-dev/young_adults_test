@@ -1,4 +1,5 @@
 const Group = require('../models/Group');
+const User = require('../models/User');
 const { isDbConnected, readData, writeData } = require('../utils/fallbackStorage');
 
 exports.createGroup = async (req, res) => {
@@ -22,7 +23,18 @@ exports.createGroup = async (req, res) => {
             return res.status(201).json(newGroup);
         }
 
-        const newGroup = new Group({ name, teacherId, subject });
+        // Fetch the teacher to get their subject and branch
+        const teacher = await User.findById(req.user.id);
+        if (!teacher) {
+            return res.status(404).json({ message: 'Teacher not found' });
+        }
+
+        const newGroup = new Group({
+            name,
+            teacherId: req.user.id,
+            subject: teacher.subject,
+            branch: req.user.branch || 'Asosiy'
+        });
         await newGroup.save();
         res.status(201).json(newGroup);
     } catch (err) {
@@ -35,11 +47,16 @@ exports.getMyGroups = async (req, res) => {
         let filter = { teacherId: req.user.id };
         if (req.user.role === 'admin') {
             filter = {};
+        } else {
+            filter.branch = req.user.branch || 'Asosiy';
         }
 
         if (!isDbConnected()) {
             const groups = readData('Group') || [];
-            const filteredGroups = req.user.role === 'admin' ? groups : groups.filter(g => g.teacherId === req.user.id);
+            let filteredGroups = groups;
+            if (req.user.role !== 'admin') {
+                filteredGroups = groups.filter(g => (g.teacherId?._id || g.teacherId) === req.user.id && (g.branch === req.user.branch || !g.branch && req.user.branch === 'Asosiy'));
+            }
             return res.json(filteredGroups);
         }
 

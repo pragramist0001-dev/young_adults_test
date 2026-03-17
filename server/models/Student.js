@@ -7,6 +7,7 @@ const StudentSchema = new mongoose.Schema({
     chosenSubject: { type: String, required: true },
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' }, // Optional group assignment
     teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    branch: { type: String, default: 'Asosiy' },
     score: { type: Number, default: 0 },
     status: { type: String, enum: ['pending', 'checked'], default: 'pending' },
     answers: [{

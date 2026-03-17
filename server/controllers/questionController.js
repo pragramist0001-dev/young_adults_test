@@ -27,7 +27,8 @@ exports.createQuestion = async (req, res) => {
             options,
             correctOption,
             subject,
-            teacherId: req.user.id
+            teacherId: req.user.id,
+            branch: req.user.branch || 'Asosiy'
         });
 
         await newQuestion.save();
@@ -42,14 +43,20 @@ exports.getQuestionsBySubject = async (req, res) => {
     try {
         const { subject } = req.params;
 
+        const teacherId = req.user.id;
+        const branch = req.user.branch || 'Asosiy';
+        let filter = { subject, teacherId, branch };
+        if (req.user.role === 'admin') {
+            filter = { subject };
+        }
+
         if (!isDbConnected()) {
-            const questions = readData('Question');
-            const filtered = questions.filter(q => q.subject === subject && q.teacherId === req.user.id);
+            const allQuestions = readData('Question') || [];
+            const filtered = allQuestions.filter(q => q.subject === subject && q.teacherId === teacherId && q.branch === branch);
             return res.json(filtered);
         }
 
-        const teacherId = req.user.id;
-        const questions = await Question.find({ subject, teacherId });
+        const questions = await Question.find(filter);
         res.json(questions);
     } catch (err) {
         res.status(500).json({ error: err.message });

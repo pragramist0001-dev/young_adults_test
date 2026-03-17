@@ -111,6 +111,9 @@ export const translations = {
         in_progress: "Jarayonda",
         completed: "Tugallangan",
         tests: "Testlar",
+        branch: "Filial",
+        all_branches: "Barcha Filiallar",
+        select_branch: "Filialni tanlang...",
 
         // Early Access & Restrictions
         access_restricted: "Kirish cheklangan",
@@ -350,6 +353,9 @@ export const translations = {
         in_progress: "В процессе",
         completed: "Завершено",
         tests: "Тесты",
+        branch: "Филиал",
+        all_branches: "Все Филиалы",
+        select_branch: "Выберите филиал...",
 
         // Early Access & Restrictions
         access_restricted: "Доступ ограничен",
@@ -588,6 +594,9 @@ export const translations = {
         in_progress: "In Progress",
         completed: "Completed",
         tests: "Tests",
+        branch: "Branch",
+        all_branches: "All Branches",
+        select_branch: "Select branch...",
 
         // Early Access & Restrictions
         access_restricted: "Access Restricted",
